@@ -1,0 +1,28 @@
+# Training checkpoints, tensorboard_logs
+checkpoints
+tensorboard_logs
+dcgan_checkpoints
+dcgan_tensorboard_logs
+vae_checkpoints
+vae_tensorboard_logs
+
+# Generated figure output directory
+figures
+
+# Source images for recovery
+images
+
+# Tensorboard logs for recovery runs
+recovery_tensorboard_logs
+
+# Output of recovery runs
+runs
+
+# Tags file
+tags
+tags.lock
+
+# Virtualenvs
+venv
+py37
+

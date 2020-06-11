@@ -1,0 +1,12 @@
+jupyterlab
+matplotlib
+numpy
+pandas
+pytorch-pretrained-biggan
+scipy
+scikit-learn
+tensorboard
+torch==1.4.0
+torchvision==0.5.0
+tqdm
+seaborn
