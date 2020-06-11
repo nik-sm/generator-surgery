@@ -1,9 +1,11 @@
 # GAN Surgery for Compressed Sensing and Inverse Problems
 
-[GAN Surgery](assets/gan_surgery.png)
+![GAN Surgery](assets/gan_surgery.png)
 
 # Requirements
+
 To install requirements:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -11,20 +13,26 @@ pip install -r requirements.txt
 # Datasets and Preprocessing
 
 The 'train' and 'test' split for all models come from the [CelebA dataset](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html), at different resolutions.
+
+For BigGAN model, we use [CelebAHQ dataset](https://github.com/tkarras/progressive_growing_of_gans)
+
 The 'out-of-distribution' split comes from the [COCO 2017 Test dataset](http://images.cocodataset.org/zips/test2017.zip) (See [COCO website](http://cocodataset.org/#download) for more details).
 
 Images are preprocessed by center cropping, and saving to tensors for faster training.
+
 A 95:5 train:test split is used.
 
-1. Download the aligned Celeba dataset. This can be done using PyTorch in a python repl:
-(note that the CelebA google drive has limited downloads per day, so if this fails, the contents of the `*.zip` files will be junk, and you must wait and try again)
+1. Download the aligned Celeba dataset. This can be done using PyTorch in a python REPL as follows:
+
+Note that the CelebA google drive has limited downloads per day, so if this fails, the contents of the `*.zip` files will be junk, and you must wait and try again.
+
 ```python
 import torchvision.datasets as d
 c = d.CelebA('./data', download=True)
 ```
-This can downloaded from with a web browser from [Google Drive](https://drive.google.com/open?id=0B7EVK8r0v71pWEZsZE9oNnFzTm8).
 
 2. Now you should have a folder `./data/celeba/img_align_celeba`. Run the preprocessing:
+
 ```bash
 DATASET=celeba # For DCGAN, use DATASET=celeba64x64
 IMG_SIZE=128 # For DCGAN, use IMG_SIZE=64
@@ -37,12 +45,15 @@ python data/preprocess_images.py --dataset $DATASET \
 ```
 
 # Training Generative Models
+
 Before training, you should have run preprocessing as described in [Datasets and Preprocessing](#datasets-and-preprocessing).
+
 ## BEGAN
+
 To start training:
-(Note that this script will use all visible GPUs by default)
+
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 python train_began.py --dataset celeba \
+python train_began.py --dataset celeba \
   --dataset_dir ./data/${DATASET_DIR} \
   --batch_size 32 \
   --run_name training \
@@ -53,7 +64,7 @@ CUDA_VISIBLE_DEVICES=0,1 python train_began.py --dataset celeba \
 
 To monitor training:
 ```bash
-python tensorboard --logdir ./tensorboard_logs
+tensorboard --logdir ./tensorboard_logs
 ```
 
 See the [BEGAN model definition](model/began.py) for more details.
@@ -66,7 +77,7 @@ python train_dcgan.py
 
 To monitor training:
 ```bash
-python tensorboard --logdir ./dcgan_tensorboard_logs
+tensorboard --logdir ./dcgan_tensorboard_logs
 ```
 
 See the [DCGAN model definition](model/dcgan.py) for more details.
@@ -84,7 +95,7 @@ python train_vae.py --epochs 20 --beta 0.1
 
 To monitor training:
 ```bash
-python tensorboard --logdir ./vae_tensorboard_logs
+tensorboard --logdir ./vae_tensorboard_logs
 ```
 See the [VAE model definition](model/vae.py) for more details.
 
