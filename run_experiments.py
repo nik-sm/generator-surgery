@@ -8,7 +8,7 @@ import torch
 from tqdm import tqdm
 
 from forward_model import get_forward_model
-from model.began_flat_withskip import Generator128
+from model.began import Generator128
 from model.biggan import BigGanSkip
 from model.dcgan import Generator as dcgan_generator
 from model.vae import VAE

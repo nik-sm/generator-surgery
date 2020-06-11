@@ -14,22 +14,12 @@ forward_models = {
         } for x in n_measure_128]
     },
     'vanilla_vae': {
-        # 'NoOp': [{}],  # Note - z_lr = 1, steps=40 for NoOp
+        # 'NoOp': [{}],  # Note - z_lr=1, steps=40 for NoOp
         'InpaintingScatter': [{
-            'fraction_kept': 0.05
-        }, {
             'fraction_kept': 0.1
         }],
         'SuperResolution': [{
-            'scale_factor': 0.5,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
             'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
-            'scale_factor': 0.125,
             'mode': 'bilinear',
             'align_corners': True
         }],
@@ -40,22 +30,12 @@ forward_models = {
         } for x in n_measure_128]
     },
     'beta_vae': {
-        # 'NoOp': [{}],  # Note - z_lr = 1, steps=40 for NoOp
+        # 'NoOp': [{}],  # Note - z_lr=1, steps=40 for NoOp
         'InpaintingScatter': [{
-            'fraction_kept': 0.05
-        }, {
             'fraction_kept': 0.1
         }],
         'SuperResolution': [{
-            'scale_factor': 0.5,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
             'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
-            'scale_factor': 0.125,
             'mode': 'bilinear',
             'align_corners': True
         }],
@@ -68,41 +48,21 @@ forward_models = {
     'dcgan': {
         # 'NoOp': [{}],  # Note - z_lr=1, steps=100 for NoOp
         'InpaintingScatter': [{
-            'fraction_kept': 0.05
-        }, {
             'fraction_kept': 0.1
         }],
         'SuperResolution': [{
-            'scale_factor': 0.5,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
             'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
-            'scale_factor': 0.125,
             'mode': 'bilinear',
             'align_corners': True
         }],
     },
     'biggan': {
-        # 'NoOp': [{}],  # Note - z_lr = 1.5, steps=200 for NoOp
+        # 'NoOp': [{}],  # Note - z_lr=1.5, steps=200 for NoOp
         'InpaintingScatter': [{
-            'fraction_kept': 0.05
-        }, {
             'fraction_kept': 0.1
         }],
         'SuperResolution': [{
-            'scale_factor': 0.5,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
             'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
-            'scale_factor': 0.125,
             'mode': 'bilinear',
             'align_corners': True
         }],
@@ -115,27 +75,15 @@ forward_models = {
     'began_cs_other_init': {
         'GaussianCompressiveSensing': [{
             'n_measure': 8000
-        }, {
-            'n_measure': 2000
         }],
     },
     'began': {
-        # 'NoOp': [{}],  # Note - z_lr = 1, steps=100 for NoOp
+        # 'NoOp': [{}],  # Note - z_lr=1, steps=100 for NoOp
         'InpaintingScatter': [{
-            'fraction_kept': 0.05
-        }, {
             'fraction_kept': 0.1
         }],
         'SuperResolution': [{
-            'scale_factor': 0.5,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
             'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }, {
-            'scale_factor': 0.125,
             'mode': 'bilinear',
             'align_corners': True
         }],
@@ -181,7 +129,7 @@ recovery_settings = {
     },
     'began': {
         'optimizer': 'lbfgs',
-        'n_steps': 100,
+        'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
@@ -208,7 +156,7 @@ recovery_settings = {
     },
     'dcgan': {
         'optimizer': 'lbfgs',
-        'n_steps': 100,
+        'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
@@ -226,7 +174,7 @@ recovery_settings = {
     },
     'vanilla_vae': {
         'optimizer': 'lbfgs',
-        'n_steps': 40,
+        'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
@@ -244,7 +192,7 @@ recovery_settings = {
     },
     'beta_vae': {
         'optimizer': 'lbfgs',
-        'n_steps': 40,
+        'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,

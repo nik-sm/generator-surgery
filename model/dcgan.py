@@ -40,7 +40,7 @@ class Generator(nn.Module):
             )
             # state size. (nc) x 64 x 64
         ])
-        # self._create_input_shapes()
+        self._create_input_shapes()
 
     def _create_input_shapes(self):
         self.input_shapes = []

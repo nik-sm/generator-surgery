@@ -6,6 +6,9 @@ dcgan_tensorboard_logs
 vae_checkpoints
 vae_tensorboard_logs
 
+# Jupyter notebook
+*ipynb_checkpoints
+
 # Generated figure output directory
 figures
 
@@ -26,3 +29,5 @@ tags.lock
 venv
 py37
 
+# Pycache
+*__pycache__

@@ -6,7 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm, trange
 
 from data.dataloaders import get_dataloader
-from model.began_flat_withskip import Discriminator128, Generator128
+from model.began import Discriminator128, Generator128
 from utils import get_z_vector, normalize
 
 
