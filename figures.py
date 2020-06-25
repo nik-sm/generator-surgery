@@ -21,9 +21,9 @@ orig_biggan_forward = orig_biggan.forward
 
 def opt_error_plot():
     def split_fn(row):
-        if row['split'] == 'train_celeba20':
+        if row['split'] == 'train_celeba128_cropped20':
             return 'Train'
-        elif row['split'] == 'test_celeba20':
+        elif row['split'] == 'test_celeba128_cropped20':
             return 'Test'
         elif row['split'] == 'ood-coco20':
             return 'OOD'
@@ -41,7 +41,12 @@ def opt_error_plot():
     with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
         df = pickle.load(f)
 
-    df = df.loc[(df['model'] == 'began_opt_error_fake_imgs')]
+    df = df.loc[(
+        (df['model'] == 'began_opt_error_fake_imgs') &
+        (df['split'].isin(['began_generated20', 'ood-coco20']))) | (
+            (df['model'] == 'began_noop') &
+            (df['split'].
+             isin(['train_celeba128_cropped20', 'test_celeba128_cropped20'])))]
     df['split_name'] = df.apply(lambda row: split_fn(row), axis=1)
     df['type'] = df.apply(lambda row: type_fn(row), axis=1)
 
@@ -187,32 +192,44 @@ def create_cs_chart(split):
     with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
         df_results = pickle.load(f)
 
+    if split == 'test_celeba':
+        split_name = [
+            'test_celeba64_cropped100',
+            'test_celeba128_cropped100',
+        ]
+    elif split == 'ood-coco':
+        split_name = ['ood-coco']
+
     df1 = pd.concat([
-        df_baseline.loc[df_baseline['model'] == 'lasso-dct-64'],
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-64')
+                        & (df_baseline['split'].isin(split_name))],
         df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
                        & (df_results['model'] == 'dcgan_cs')
-                       & (df_results['n_cuts'].isin([0, 1]))]
+                       & (df_results['n_cuts'].isin([0, 1]))
+                       & (df_results['split'].isin(split_name))]
     ])
     df1['type'] = 'DCGAN'
     df2 = pd.concat([
-        df_baseline.loc[df_baseline['model'] == 'lasso-dct-128'],
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
         df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
                        & (df_results['model'] == 'began_cs')
-                       & (df_results['n_cuts'].isin([0, 3]))]
+                       & (df_results['n_cuts'].isin([0, 3]))
+                       & (df_results['split'].isin(split_name))]
     ])
     df2['type'] = 'BEGAN'
     df3 = pd.concat([
-        df_baseline.loc[df_baseline['model'] == 'lasso-dct-128'],
-        df_results.loc[
-            (df_results['fm'] == 'GaussianCompressiveSensing')
-            & (df_results['model'].isin(['vanilla_vae_cs', 'beta_vae_cs']))
-            & (df_results['n_cuts'].isin([0, 2]))]
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'].isin(['vanilla_vae_cs']))
+                       & (df_results['n_cuts'].isin([0, 2]))
+                       & (df_results['split'].isin(split_name))]
     ])
     df3['type'] = 'VAE'
 
     df = pd.concat([df1, df2, df3])
 
-    df = df.loc[df['split'] == split]
     df['undersampling_ratio'] = df.apply(lambda row: ratio_fn(row), axis=1)
     df['model_name'] = df.apply(lambda row: name_fn(row), axis=1)
 
@@ -265,29 +282,8 @@ def noop_plot():
     with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
         df_results = pickle.load(f)
 
-    def _name_fn(row):
-        if row['model'].startswith('dcgan'):
-            return 'DCGAN'
-        elif row['model'].startswith('began'):
-            return 'BEGAN'
-        elif row['model'].startswith('vanilla_vae'):
-            return 'VAE'
-        elif row['model'].startswith('beta_vae'):
-            return 'β-VAE'
-        elif row['model'].startswith('biggan'):
-            return 'BigGAN'
-        else:
-            return ''
-
-    def _type_fn(row):
-
-        if row['n_cuts'] == 0:
-            return 'No Surgery'
-        else:
-            return 'With Surgery'
-
     def _split_fn(row):
-        if row['split'] in ['test_celeba20', 'celebahq20']:
+        if 'celeba' in row['split']:
             return 'Test'
         elif row['split'] == 'ood-coco20':
             return 'OOD'
@@ -295,15 +291,24 @@ def noop_plot():
             return ''
 
     # Filters
-    df = df_results.loc[(df_results['model'].isin(
-        ['began', 'biggan', 'vanilla_vae', 'beta_vae', 'dcgan']))
-                        & (df_results['split'].isin(
-                            ['test_celeba20', 'celebahq20', 'ood-coco20']))]
-    df = df.loc[((df['model'] == 'began') & (df['n_cuts'].isin([0, 3]))) |
-                ((df['model'] == 'biggan') & (df['n_cuts'].isin([0, 7]))) |
-                ((df['model'] == 'vanilla_vae') & (df['n_cuts'].isin([0, 2])))
-                | ((df['model'] == 'beta_vae') & (df['n_cuts'].isin([0, 2]))) |
-                ((df['model'] == 'dcgan') & (df['n_cuts'].isin([0, 1])))]
+    df = df_results.loc[
+        (df_results['model'].isin([
+            'began', 'began_noop', 'biggan', 'vanilla_vae', 'vanilla_vae_noop',
+            'beta_vae', 'beta_vae_noop', 'dcgan', 'dcgan_noop'
+        ]))
+        & (df_results['split'].isin([
+            'test_celeba64_cropped20', 'test_celeba128_cropped20',
+            'celebahq20', 'ood-coco20'
+        ]))]
+    df = df.loc[((df['model'].isin(['began', 'began_noop'])) &
+                 (df['n_cuts'].isin([0, 3]))) | ((df['model'] == 'biggan') &
+                                                 (df['n_cuts'].isin([0, 7]))) |
+                ((df['model'].isin(['vanilla_vae', 'vanilla_vae_noop'])) &
+                 (df['n_cuts'].isin([0, 2])))
+                | ((df['model'].isin(['beta_vae', 'beta_vae_noop'])) &
+                   (df['n_cuts'].isin([0, 2]))) |
+                ((df['model'].isin(['dcgan', 'dcgan_noop'])) &
+                 (df['n_cuts'].isin([0, 1])))]
     df = df.loc[df['fm'] == 'NoOp']
 
     df.loc[:, 'model_name'] = pd.Series(df.apply(lambda row: _name_fn(row),
@@ -398,9 +403,16 @@ def inverse_plot(split):
         df_results = pickle.load(f)
 
     if split == 'test_celeba':
-        df = df_results.loc[(df_results['model'].isin(
-            ['began', 'biggan', 'vanilla_vae', 'beta_vae', 'dcgan'])) & (
-                df_results['split'].isin(['test_celeba20', 'celebahq20']))]
+        df = df_results.loc[
+            ((df_results['model'] == 'biggan') &
+             (df_results['split'] == 'celebahq20')) |
+            ((df_results['model'].isin(['began', 'vanilla_vae'])) &
+             (df_results['split'] == 'test_celeba128_cropped20')) |
+            ((df_results['model'].isin(['dcgan_inverse', 'beta_vae_inverse']))
+             &
+             (df_results['split'].
+              isin(['test_celeba64_cropped20', 'test_celeba128_cropped20'])))]
+
     elif split == 'ffhq':
         df = df_results.loc[(df_results['model'].isin(
             ['began', 'biggan', 'vanilla_vae', 'beta_vae', 'dcgan']))
@@ -415,8 +427,10 @@ def inverse_plot(split):
     df = df.loc[((df['model'] == 'began') & (df['n_cuts'].isin([0, 3]))) |
                 ((df['model'] == 'biggan') & (df['n_cuts'].isin([0, 7]))) |
                 ((df['model'] == 'vanilla_vae') & (df['n_cuts'].isin([0, 2])))
-                | ((df['model'] == 'beta_vae') & (df['n_cuts'].isin([0, 2]))) |
-                ((df['model'] == 'dcgan') & (df['n_cuts'].isin([0, 1])))]
+                | ((df['model'].isin(['beta_vae', 'beta_vae_inverse'])) &
+                   (df['n_cuts'].isin([0, 2]))) |
+                ((df['model'].isin(['dcgan', 'dcgan_inverse'])) &
+                 (df['n_cuts'].isin([0, 1])))]
 
     df.loc[:, 'model_name'] = pd.Series(df.apply(lambda row: _name_fn(row),
                                                  axis=1),
@@ -532,7 +546,7 @@ def cs_other_init_plot(split, n_measure):
         order=mode_order,
     )
 
-    if split == 'test_celeba':
+    if 'celeba' in split:
         title = f'Test'
     elif split == 'ood-coco':
         title = f'OOD'
@@ -970,22 +984,25 @@ def cs_images(top_n):
     params = {
         'began_cs': {
             'n_cuts': 3,
-            'n_measure': 8000
+            'n_measure': 8000,
+            'split': ['test_celeba128_cropped100', 'ood-coco']
         },
         'dcgan_cs': {
             'n_cuts': 1,
-            'n_measure': 2000
+            'n_measure': 2000,
+            'split': ['test_celeba64_cropped100', 'ood-coco']
         },
         'vanilla_vae_cs': {
             'n_cuts': 2,
-            'n_measure': 8000
+            'n_measure': 8000,
+            'split': ['test_celeba128_cropped100', 'ood-coco']
         }
     }
 
-    for split in ['test_celeba', 'ood-coco']:
-        for model, kwargs in params.items():
-            os.makedirs(f'./figures/cs_images/{model}', exist_ok=True)
+    for model, kwargs in params.items():
+        os.makedirs(f'./figures/cs_images/{model}', exist_ok=True)
 
+        for split in kwargs['split']:
             imgs = get_top_cs(df, split, model, kwargs['n_cuts'],
                               kwargs['n_measure'], top_n)
             for img in imgs:
@@ -1263,12 +1280,13 @@ if __name__ == '__main__':
     # print('NoOp images...')
     # noop_images(2)
 
+    # # NOTE - waiting for lasso results for CS
     # print('CS plots...')
     # create_cs_chart('test_celeba')
     # create_cs_chart('ood-coco')
 
-    # print('CS images...')
-    # cs_images(20)
+    print('CS images...')
+    cs_images(50)
 
     # print('Inverse images...')
     # inverse_images(20)
@@ -1281,7 +1299,7 @@ if __name__ == '__main__':
     # noop_plot()
 
     # print('CS Other Init plots...')
-    # cs_other_init_plot('test_celeba', 8000)
+    # cs_other_init_plot('test_celeba128_cropped100', 8000)
     # cs_other_init_plot('ood-coco', 8000)
 
     # print('Best Cuts plots...')
@@ -1298,5 +1316,5 @@ if __name__ == '__main__':
     # print('Opt error plots...')
     # opt_error_plot()
 
-    print('Cut training images...')
-    cut_training(4)
+    # print('Cut training images...')
+    # cut_training(4)
