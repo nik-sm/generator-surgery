@@ -1,3 +1,4 @@
+import argparse
 import os
 import shutil
 import warnings
@@ -8,13 +9,14 @@ import torch
 import torch.nn.functional as F
 from sklearn.linear_model import Lasso
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import trange
+from tqdm import tqdm, trange
 
-from forward_model import GaussianCompressiveSensing
-from utils import get_z_vector, psnr_from_mse
+from forward_model import GaussianCompressiveSensing, NoOp
+from model.began import Generator128
+from utils import (get_z_vector, load_target_image, load_trained_net,
+                   psnr_from_mse)
 
 warnings.filterwarnings("ignore")
-DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
 def recover(x,
@@ -284,3 +286,45 @@ def solve_lasso(A_val, y_val, gamma):
     x_hat = lasso_est.coef_
     x_hat = np.reshape(x_hat, [-1])
     return x_hat
+
+
+if __name__ == '__main__':
+    DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
+    a = argparse.ArgumentParser()
+    a.add_argument('--img_dir', required=True)
+    a.add_argument('--n_cuts', type=int, required=True)
+    a.add_argument('--disable_tqdm', default=False)
+    args = a.parse_args()
+
+    gen = Generator128(64)
+    gen = load_trained_net(
+        gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+              '.n_cuts=0/gen_ckpt.49.pt'))
+    gen = gen.eval().to(DEVICE)
+
+    n_cuts = 3
+
+    img_size = 128
+    img_shape = (3, img_size, img_size)
+
+    forward_model = GaussianCompressiveSensing(n_measure=20000,
+                                               img_shape=img_shape)
+    # forward_model = NoOp()
+
+    for img_name in tqdm(os.listdir(args.img_dir),
+                         desc='Images',
+                         leave=True,
+                         disable=args.disable_tqdm):
+        orig_img = load_target_image(os.path.join(args.img_dir, img_name),
+                                     img_size).to(DEVICE)
+        img_basename, _ = os.path.splitext(img_name)
+        x_hat, x_degraded = recover(orig_img,
+                                    gen,
+                                    optimizer_type='lbfgs',
+                                    n_cuts=n_cuts,
+                                    forward_model=forward_model,
+                                    z_lr=1.0,
+                                    n_steps=100,
+                                    run_dir='ours',
+                                    run_name=img_basename)

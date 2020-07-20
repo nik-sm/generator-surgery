@@ -111,7 +111,7 @@ class Generator128(nn.Module):
             res = self.forward(x1, x2, n_cuts)
             print(x1.shape, () if n_cuts <= 1 else x2.shape, res.shape[1:])
 
-    def forward(self, x1, x2=None, n_cuts=0):
+    def forward(self, x1, x2=None, n_cuts=0, end=None):
         """
         Skip inputs are provided to layers with python index 4, 7, 10
 
@@ -139,7 +139,9 @@ class Generator128(nn.Module):
         upsample_layer_idx = [4, 7, 10]
         conv256_layer_idx = [5, 8, 11]
         skip_counter = [1, 1, 1]
-        for i in range(n_cuts, len(self.layers)):
+        if end is None:
+            end = len(self.layers)
+        for i in range(n_cuts, end):
             layer = self.layers[i]
 
             if i == 1:

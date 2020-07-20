@@ -15,7 +15,6 @@ from utils import (get_z_vector, load_target_image, load_trained_net,
                    psnr_from_mse)
 
 warnings.filterwarnings("ignore")
-DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
 def iagan_recover(
@@ -218,7 +217,7 @@ def iagan_recover(
 
 
 if __name__ == '__main__':
-    DEVICE = 'cuda:0'
+    DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     a = argparse.ArgumentParser()
     a.add_argument('--img_dir', required=True)
