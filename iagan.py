@@ -26,9 +26,9 @@ def iagan_recover(
         limit=1,
         z_lr1=1e-4,
         z_lr2=1e-4,
-        model_lr=1e-3,
+        model_lr=5e-4,
         z_steps1=1600,
-        z_steps2=300,
+        z_steps2=600,
         run_dir=None,  # IAGAN
         run_name=None,  # datetime or config
         set_seed=True,
@@ -103,7 +103,7 @@ def iagan_recover(
 
     # Stage 1: optimize latent code only
     save_img_every_n = 50
-    for j in trange(z_steps1, desc='Stage1', leave=True):
+    for j in trange(z_steps1, desc='Stage1', leave=False):
         optimizer_z.zero_grad()
         x_hat = gen.forward(z1, z2, n_cuts=0, **kwargs)
         if gen.rescale:
@@ -136,7 +136,7 @@ def iagan_recover(
     # Stage 2: optimize latent code and model
     save_img_every_n = 20
     optimizer_z = torch.optim.Adam([z1], lr=z_lr2)
-    for j in trange(z_steps2, desc='Stage2', leave=True):
+    for j in trange(z_steps2, desc='Stage2', leave=False):
         optimizer_z.zero_grad()
         optimizer_model.zero_grad()
         x_hat = gen.forward(z1, z2, n_cuts=0, **kwargs)
@@ -183,6 +183,7 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser()
     a.add_argument('--img_dir', required=True)
     a.add_argument('--disable_tqdm', default=False)
+    a.add_argument('--run_name_suffix', default='')
     args = a.parse_args()
 
     gen = Generator128(64)
@@ -194,9 +195,9 @@ if __name__ == '__main__':
     img_size = 128
     img_shape = (3, img_size, img_size)
 
-    # forward_model = GaussianCompressiveSensing(n_measure=400,
-    #                                            img_shape=img_shape)
-    forward_model = NoOp()
+    forward_model = GaussianCompressiveSensing(n_measure=2500,
+                                               img_shape=img_shape)
+    # forward_model = NoOp()
 
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
@@ -209,4 +210,5 @@ if __name__ == '__main__':
                                           gen,
                                           forward_model,
                                           run_dir='iagan',
-                                          run_name=img_basename)
+                                          run_name=(img_basename +
+                                                    args.run_name_suffix))

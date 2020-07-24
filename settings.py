@@ -5,6 +5,11 @@ n_measure_128 = [
 ]
 
 forward_models = {
+    'iagan_began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
     'began_opt_error_fake_imgs': {
         'NoOp': [{}],
     },
@@ -208,4 +213,14 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
+    'iagan_began_cs': {
+        'optimizer': 'adam',
+        'z_steps1': 1600,
+        'z_steps2': 600,
+        'z_lr1': 1e-4,
+        'z_lr2': 1e-4,
+        'model_lr': 1e-3,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+    }
 }

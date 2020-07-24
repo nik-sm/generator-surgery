@@ -4,16 +4,17 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-import torch
-from tqdm import tqdm
 
+import torch
 from forward_model import get_forward_model
 from model.began import Generator128
 from model.biggan import BigGanSkip
 from model.dcgan import Generator as dcgan_generator
 from model.vae import VAE
 from recover import recover, recover_dct
+from iagan import iagan_recover
 from settings import baseline_settings, forward_models, recovery_settings
+from tqdm import tqdm
 from utils import (dict_to_str, get_baseline_results_folder, get_images_folder,
                    get_results_folder, load_target_image, load_trained_net,
                    psnr)
@@ -250,6 +251,122 @@ def gan_images(args):
                         pickle.dump(p, open(results_folder / 'psnr.pkl', 'wb'))
 
 
+def iagan_images(args):
+    os.makedirs(BASE_DIR, exist_ok=True)
+
+    if args.model in ['iagan_began_cs']:
+        gen = Generator128(64)
+        gen = load_trained_net(
+            gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                  '.n_cuts=0/gen_ckpt.49.pt'))
+        gen = gen.eval().to(DEVICE)
+        img_size = 128
+
+    else:
+        raise NotImplementedError()
+
+    img_shape = (3, img_size, img_size)
+    metadata = recovery_settings[args.model]
+
+    z_init_mode_list = metadata['z_init_mode']
+    limit_list = metadata['limit']
+    assert len(z_init_mode_list) == len(limit_list)
+    del (metadata['z_init_mode'])
+    del (metadata['limit'])
+
+    forwards = forward_models[args.model]
+
+    data_split = os.path.basename(args.img_dir)
+    for img_name in tqdm(os.listdir(args.img_dir),
+                         desc='Images',
+                         leave=True,
+                         disable=args.disable_tqdm):
+        # Load image and get filename without extension
+        orig_img = load_target_image(os.path.join(args.img_dir, img_name),
+                                     img_size).to(DEVICE)
+        img_basename, _ = os.path.splitext(img_name)
+
+        for i, (f, f_args_list) in enumerate(
+                tqdm(forwards.items(),
+                     desc='Forwards',
+                     leave=False,
+                     disable=args.disable_tqdm)):
+            for f_args in tqdm(f_args_list,
+                               desc=f'{f} Args',
+                               leave=False,
+                               disable=args.disable_tqdm):
+
+                f_args['img_shape'] = img_shape
+                forward_model = get_forward_model(f, **f_args)
+
+                for z_init_mode, limit in zip(
+                        tqdm(z_init_mode_list, desc='z_init_mode',
+                             leave=False), limit_list):
+                    metadata['z_init_mode'] = z_init_mode
+                    metadata['limit'] = limit
+
+                    # Before doing recovery, check if results already exist
+                    # and possibly skip
+                    recovered_name = 'recovered.pt'
+                    results_folder = get_results_folder(
+                        image_name=img_basename,
+                        model=args.model,
+                        n_cuts=0,  # NOTE - this field is unused for iagan
+                        split=data_split,
+                        forward_model=forward_model,
+                        recovery_params=dict_to_str(metadata),
+                        base_dir=BASE_DIR)
+
+                    os.makedirs(results_folder, exist_ok=True)
+
+                    recovered_path = results_folder / recovered_name
+                    if os.path.exists(recovered_path) and not args.overwrite:
+                        print(f'{recovered_path} already exists, skipping...')
+                        continue
+
+                    if args.run_name is not None:
+                        current_run_name = (
+                            f'{img_basename}'
+                            f'.{forward_model}.z_lr={metadata["z_lr"]}'
+                            f'.z_init={z_init_mode}.limit={limit}'
+                            f'.{args.run_name}')
+                    else:
+                        current_run_name = None
+
+                    recovered_img, distorted_img = iagan_recover(
+                        orig_img, gen, forward_model, metadata['optimizer'],
+                        z_init_mode, limit, metadata['z_lr1'],
+                        metadata['z_lr2'], metadata['model_lr'],
+                        metadata['z_steps1'], metadata['z_steps2'],
+                        args.run_dir, current_run_name, True,
+                        args.disable_tqdm)
+
+                    # Make images folder
+                    img_folder = get_images_folder(split=data_split,
+                                                   image_name=img_basename,
+                                                   img_size=img_size,
+                                                   base_dir=BASE_DIR)
+                    os.makedirs(img_folder, exist_ok=True)
+
+                    # Save original image if needed
+                    original_img_path = img_folder / 'original.pt'
+                    if not os.path.exists(original_img_path):
+                        torch.save(orig_img, original_img_path)
+
+                    # Save distorted image if needed
+                    if forward_model.viewable:
+                        distorted_img_path = img_folder / f'{forward_model}.pt'
+                        if not os.path.exists(distorted_img_path):
+                            torch.save(distorted_img, distorted_img_path)
+
+                    # Save recovered image and metadata
+                    torch.save(recovered_img, recovered_path)
+                    pickle.dump(metadata,
+                                open(results_folder / 'metadata.pkl', 'wb'))
+                    p = psnr(recovered_img, orig_img)
+                    pickle.dump(p, open(results_folder / 'psnr.pkl', 'wb'))
+
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--img_dir', required=True, help='')
@@ -281,5 +398,7 @@ if __name__ == '__main__':
             'lasso-dct-128',
     ]:
         lasso_cs_images(args)
+    elif args.model in ['iagan_began_cs']:
+        iagan_images(args)
     else:
         raise NotImplementedError()

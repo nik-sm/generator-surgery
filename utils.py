@@ -3,8 +3,9 @@ import os
 import pickle
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 import torch.nn.functional as F

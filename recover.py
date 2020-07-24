@@ -293,7 +293,6 @@ if __name__ == '__main__':
 
     a = argparse.ArgumentParser()
     a.add_argument('--img_dir', required=True)
-    a.add_argument('--n_cuts', type=int, required=True)
     a.add_argument('--disable_tqdm', default=False)
     args = a.parse_args()
 
@@ -308,7 +307,7 @@ if __name__ == '__main__':
     img_size = 128
     img_shape = (3, img_size, img_size)
 
-    forward_model = GaussianCompressiveSensing(n_measure=20000,
+    forward_model = GaussianCompressiveSensing(n_measure=2500,
                                                img_shape=img_shape)
     # forward_model = NoOp()
 

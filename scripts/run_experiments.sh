@@ -6,3 +6,4 @@ MODEL=$1
 
 python run_experiments.py --img_dir $2 \
 --model ${MODEL} \
+--overwrite
