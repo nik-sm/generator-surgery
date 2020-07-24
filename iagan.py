@@ -7,7 +7,7 @@ import numpy as np
 
 import torch
 import torch.nn.functional as F
-from forward_model import GaussianCompressiveSensing
+from forward_model import GaussianCompressiveSensing, NoOp
 from model.began import Generator128
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm, trange
@@ -24,18 +24,18 @@ def iagan_recover(
         optimizer_type='adam',
         mode='clamped_normal',
         limit=1,
-        z_lr1=0.1,
+        z_lr1=1e-4,
         z_lr2=1e-4,
-        model_lr=1e-4,
+        model_lr=1e-3,
         z_steps1=1600,
         z_steps2=300,
-        batch_size=1,
         run_dir=None,  # IAGAN
         run_name=None,  # datetime or config
         set_seed=True,
         disable_tqdm=False,
         return_z1_z2=False,
         **kwargs):
+    batch_size = 1
 
     if set_seed:
         torch.manual_seed(0)
@@ -105,54 +105,33 @@ def iagan_recover(
     save_img_every_n = 50
     for j in trange(z_steps1, desc='Stage1', leave=True):
         optimizer_z.zero_grad()
-        x_hats = gen.forward(z1, z2, n_cuts=0, **kwargs)
+        x_hat = gen.forward(z1, z2, n_cuts=0, **kwargs)
         if gen.rescale:
-            x_hats = (x_hats + 1) / 2
-        train_mses = F.mse_loss(forward_model(x_hats),
-                                y_observed,
-                                reduction='none')
-        train_mses = train_mses.view(batch_size, -1).mean(1)
-
-        train_mse = train_mses.sum()
+            x_hat = (x_hat + 1) / 2
+        train_mse = F.mse_loss(forward_model(x_hat), y_observed)
         train_mse.backward()
         optimizer_z.step()
 
-        train_mses_clamped = F.mse_loss(forward_model(x_hats.detach().clamp(
-            0, 1)),
-                                        y_observed,
-                                        reduction='none').view(batch_size,
-                                                               -1).mean(1)
+        train_mse_clamped = F.mse_loss(
+            forward_model(x_hat.detach().clamp(0, 1)), y_observed)
 
-        orig_mses_clamped = F.mse_loss(x_hats.detach().clamp(0, 1),
-                                       x,
-                                       reduction='none').view(batch_size,
-                                                              -1).mean(1)
-
-        best_train_mse, best_idx = train_mses_clamped.min(0)
-        worst_train_mse, worst_idx = train_mses_clamped.max(0)
-        best_orig_mse = orig_mses_clamped[best_idx]
-        worst_orig_mse = orig_mses_clamped[worst_idx]
+        orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
         if run_name is not None and j == 0:
-            writer.add_image('Start', x_hats[best_idx].clamp(0, 1))
+            writer.add_image('Start', x_hat.squeeze().clamp(0, 1))
 
         if run_name is not None:
-            writer.add_scalar('Stage1/TRAIN_MSE/best', best_train_mse, j + 1)
-            writer.add_scalar('Stage1/TRAIN_MSE/worst', worst_train_mse, j + 1)
-            writer.add_scalar('Stage1/TRAIN_MSE/sum', train_mse, j + 1)
-            writer.add_scalar('Stage1/ORIG_MSE/best', best_orig_mse, j + 1)
-            writer.add_scalar('Stage1/ORIG_MSE/worst', worst_orig_mse, j + 1)
-            writer.add_scalar('Stage1/ORIG_PSNR/best',
-                              psnr_from_mse(best_orig_mse), j + 1)
-            writer.add_scalar('Stage1/ORIG_PSNR/worst',
-                              psnr_from_mse(worst_orig_mse), j + 1)
+            writer.add_scalar('Stage1/TRAIN_MSE', train_mse_clamped, j + 1)
+            writer.add_scalar('Stage1/ORIG_MSE', orig_mse_clamped, j + 1)
+            writer.add_scalar('Stage1/ORIG_PSNR',
+                              psnr_from_mse(orig_mse_clamped), j + 1)
 
             if j % save_img_every_n == 0:
-                writer.add_image('Stage1/Recovered/Best',
-                                 x_hats[best_idx].clamp(0, 1), j + 1)
+                writer.add_image('Stage1/Recovered',
+                                 x_hat.squeeze().clamp(0, 1), j + 1)
 
     if run_name is not None:
-        writer.add_image('Stage1/Final', x_hats[best_idx].clamp(0, 1))
+        writer.add_image('Stage1/Final', x_hat.squeeze().clamp(0, 1))
 
     # Stage 2: optimize latent code and model
     save_img_every_n = 20
@@ -160,60 +139,42 @@ def iagan_recover(
     for j in trange(z_steps2, desc='Stage2', leave=True):
         optimizer_z.zero_grad()
         optimizer_model.zero_grad()
-        x_hats = gen.forward(z1, z2, n_cuts=0, **kwargs)
+        x_hat = gen.forward(z1, z2, n_cuts=0, **kwargs)
         if gen.rescale:
-            x_hats = (x_hats + 1) / 2
-        train_mses = F.mse_loss(forward_model(x_hats),
-                                y_observed,
-                                reduction='none')
-        train_mses = train_mses.view(batch_size, -1).mean(1)
-
-        train_mse = train_mses.sum()
+            x_hat = (x_hat + 1) / 2
+        train_mse = F.mse_loss(forward_model(x_hat), y_observed)
         train_mse.backward()
         optimizer_z.step()
         optimizer_model.step()
 
-        train_mses_clamped = F.mse_loss(forward_model(x_hats.detach().clamp(
-            0, 1)),
-                                        y_observed,
-                                        reduction='none').view(batch_size,
-                                                               -1).mean(1)
+        train_mse_clamped = F.mse_loss(
+            forward_model(x_hat.detach().clamp(0, 1)), y_observed)
 
-        orig_mses_clamped = F.mse_loss(x_hats.detach().clamp(0, 1),
-                                       x,
-                                       reduction='none').view(batch_size,
-                                                              -1).mean(1)
-
-        best_train_mse, best_idx = train_mses_clamped.min(0)
-        worst_train_mse, worst_idx = train_mses_clamped.max(0)
-        best_orig_mse = orig_mses_clamped[best_idx]
-        worst_orig_mse = orig_mses_clamped[worst_idx]
+        orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
         if run_name is not None and j == 0:
-            writer.add_image('Start', x_hats[best_idx].clamp(0, 1))
+            writer.add_image('Start', x_hat.squeeze().clamp(0, 1))
 
         if run_name is not None:
-            writer.add_scalar('Stage2/TRAIN_MSE/best', best_train_mse, j + 1)
-            writer.add_scalar('Stage2/TRAIN_MSE/worst', worst_train_mse, j + 1)
-            writer.add_scalar('Stage2/TRAIN_MSE/sum', train_mse, j + 1)
-            writer.add_scalar('Stage2/ORIG_MSE/best', best_orig_mse, j + 1)
-            writer.add_scalar('Stage2/ORIG_MSE/worst', worst_orig_mse, j + 1)
-            writer.add_scalar('Stage2/ORIG_PSNR/best',
-                              psnr_from_mse(best_orig_mse), j + 1)
-            writer.add_scalar('Stage2/ORIG_PSNR/worst',
-                              psnr_from_mse(worst_orig_mse), j + 1)
+            writer.add_scalar('Stage2/TRAIN_MSE', train_mse_clamped, j + 1)
+            writer.add_scalar('Stage2/ORIG_MSE', orig_mse_clamped, j + 1)
+            writer.add_scalar('Stage2/ORIG_PSNR',
+                              psnr_from_mse(orig_mse_clamped), j + 1)
 
             if j % save_img_every_n == 0:
-                writer.add_image('Stage2/Recovered/Best',
-                                 x_hats[best_idx].clamp(0, 1), j + 1)
+                writer.add_image('Stage2/Recovered',
+                                 x_hat.squeeze().clamp(0, 1), j + 1)
 
     if run_name is not None:
-        writer.add_image('Stage2/Final', x_hats[best_idx].clamp(0, 1))
+        writer.add_image('Stage2/Final', x_hat.squeeze().clamp(0, 1))
 
     if return_z1_z2:
-        return x_hats[best_idx], forward_model(x)[0], {'z1': z1, 'z2': z2}
+        return x_hat.squeeze(), forward_model(x).squeeze(), {
+            'z1': z1,
+            'z2': z2
+        }
     else:
-        return x_hats[best_idx], forward_model(x)[0]
+        return x_hat.squeeze(), forward_model(x).squeeze()
 
 
 if __name__ == '__main__':
@@ -233,8 +194,9 @@ if __name__ == '__main__':
     img_size = 128
     img_shape = (3, img_size, img_size)
 
-    forward_model = GaussianCompressiveSensing(n_measure=400,
-                                               img_shape=img_shape)
+    # forward_model = GaussianCompressiveSensing(n_measure=400,
+    #                                            img_shape=img_shape)
+    forward_model = NoOp()
 
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
