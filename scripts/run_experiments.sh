@@ -4,5 +4,5 @@
 
 MODEL=$1
 
-CUDA_VISIBLE_DEVICES=2 python run_experiments.py --img_dir $2 \
+CUDA_VISIBLE_DEVICES=0 python run_experiments.py --img_dir $2 \
 --model ${MODEL} \
