@@ -3,9 +3,8 @@ import os
 import pickle
 from pathlib import Path
 
-import numpy as np
-
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -151,6 +150,7 @@ def parse_images_folder(p):
     return split, image_name, img_size
 
 
+# Use get_results_folder for all models, use dummy n_cuts if necessary
 def get_results_folder(image_name, model, n_cuts, split, forward_model,
                        recovery_params, base_dir):
     return (Path(base_dir) / 'results' / model / f'n_cuts={n_cuts}' / split /

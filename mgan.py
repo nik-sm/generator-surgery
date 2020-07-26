@@ -19,14 +19,14 @@ warnings.filterwarnings("ignore")
 
 def mgan_recover(x,
                  gen,
-                 combine_layer,
+                 n_cuts,
                  forward_model,
-                 optimizer_type='adam',
-                 mode='clamped_normal',
+                 optimizer_type='sgd',
+                 mode='zero',
                  limit=1,
-                 z_lr=0.1,
-                 n_steps=5000,
-                 batch_z_size=20,
+                 z_lr=1,
+                 n_steps=2000,
+                 recover_batch_size=20,
                  run_dir=None,
                  run_name=None,
                  set_seed=True,
@@ -38,6 +38,7 @@ def mgan_recover(x,
         x - input image, torch tensor (C x H x W)
         gen - generator, already loaded with checkpoint weights
         forward_model - corrupts the image
+        n_cuts - the intermediate layer to combine z vectors
         n_steps - number of optimization steps during recovery
         run_name - use None for no logging
     """
@@ -51,7 +52,7 @@ def mgan_recover(x,
         torch.backends.cudnn.benchmark = True
 
     z1_dim, _ = gen.input_shapes[0]
-    _, z2_dim = gen.input_shapes[combine_layer]
+    _, z2_dim = gen.input_shapes[n_cuts]
 
     if (isinstance(forward_model, GaussianCompressiveSensing)):
         n_pixel_bora = 64 * 64 * 3
@@ -61,12 +62,12 @@ def mgan_recover(x,
             torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
 
     z1 = torch.nn.Parameter(
-        get_z_vector((batch_z_size, *z1_dim),
+        get_z_vector((recover_batch_size, *z1_dim),
                      mode=mode,
                      limit=limit,
                      device=x.device))
     alpha = torch.nn.Parameter(
-        get_z_vector((batch_z_size, gen.input_shapes[combine_layer][0][0]),
+        get_z_vector((recover_batch_size, gen.input_shapes[n_cuts][0][0]),
                      mode=mode,
                      limit=limit,
                      device=x.device))
@@ -117,13 +118,9 @@ def mgan_recover(x,
                     disable=disable_tqdm):
 
         optimizer_z.zero_grad()
-        F_l = gen.forward(z1, None, n_cuts=0, end=combine_layer, **kwargs)
+        F_l = gen.forward(z1, None, n_cuts=0, end=n_cuts, **kwargs)
         F_l_2 = (F_l * alpha[:, :, None, None]).sum(0, keepdim=True)
-        x_hats = gen.forward(F_l_2,
-                             z2,
-                             n_cuts=combine_layer,
-                             end=None,
-                             **kwargs)
+        x_hats = gen.forward(F_l_2, z2, n_cuts=n_cuts, end=None, **kwargs)
         if gen.rescale:
             x_hats = (x_hats + 1) / 2
         train_mse = F.mse_loss(forward_model(x_hats), y_observed)
@@ -164,7 +161,7 @@ if __name__ == '__main__':
 
     a = argparse.ArgumentParser()
     a.add_argument('--img_dir', required=True)
-    a.add_argument('--combine_layer', type=int, required=True)
+    a.add_argument('--n_cuts', type=int, required=True)
     a.add_argument('--disable_tqdm', default=False)
     args = a.parse_args()
 
@@ -190,7 +187,7 @@ if __name__ == '__main__':
         img_basename, _ = os.path.splitext(img_name)
         x_hat, x_degraded = mgan_recover(orig_img,
                                          gen,
-                                         combine_layer=args.combine_layer,
+                                         n_cuts=args.n_cuts,
                                          forward_model=forward_model,
                                          run_dir='mgan_prior',
                                          run_name=img_basename)

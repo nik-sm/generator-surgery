@@ -5,6 +5,18 @@ n_measure_128 = [
 ]
 
 forward_models = {
+    'mgan_began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
+    'mgan_vanilla_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': 1200
+        }, {
+            'n_measure': 4000
+        }]
+    },
     'iagan_began_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
@@ -222,5 +234,23 @@ recovery_settings = {
         'model_lr': 1e-3,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
+    },
+    'mgan_began_cs': {
+        'optimizer': 'adam',
+        'n_steps': 3000,
+        'z_lr': 1e-3,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+        'recover_batch_size': 20,
+        'n_cuts_list': [2],
+    },
+    'mgan_vanilla_vae_cs': {
+        'optimizer': 'adam',
+        'n_steps': 5000,
+        'z_lr': 1e-3,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+        'recover_batch_size': 20,
+        'n_cuts_list': [1, 2],
     }
 }

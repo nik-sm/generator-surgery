@@ -103,8 +103,10 @@ class Decoder(nn.Module):
             z = layer(z)
             self.input_shapes.append((tuple(z.shape[1:]), ()))
 
-    def forward(self, z1, z2=None, n_cuts=0):
-        for layer in self.layers[n_cuts:]:
+    def forward(self, z1, z2=None, n_cuts=0, end=None):
+        if end is None:
+            end = len(self.layers)
+        for layer in self.layers[n_cuts:end]:
             z1 = layer(z1)
         return z1
 
