@@ -3,6 +3,9 @@ n_measure_64 = [100, 150, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
 n_measure_128 = [
     400, 600, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000
 ]
+n_measure_128_few = [
+    400, 600, 1200, 2400, 4000
+]
 
 forward_models = {
     'mgan_began_cs': {
@@ -20,7 +23,8 @@ forward_models = {
     'iagan_began_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_128]
+        # } for x in n_measure_128]
+        } for x in n_measure_128_few]
     },
     'began_opt_error_fake_imgs': {
         'NoOp': [{}],
@@ -230,8 +234,8 @@ recovery_settings = {
         'z_steps1': 1600,
         'z_steps2': 600,
         'z_lr1': 1e-4,
-        'z_lr2': 1e-4,
-        'model_lr': 1e-3,
+        'z_lr2': 1e-5,
+        'model_lr': 1e-5,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },

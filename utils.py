@@ -167,7 +167,10 @@ def parse_results_folder(root='./runs/results'):
             'began': '128',
             'vanilla_vae': '128',
             'beta_vae': '128',
-            'biggan': '512'
+            'biggan': '512',
+            'iagan_began': '128',
+            'iagan_vae': '128',
+            'iagan_dcgan': '64',
         }
         for k, v in d.items():
             if model_name.startswith(k):

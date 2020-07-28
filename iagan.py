@@ -25,10 +25,10 @@ def iagan_recover(
         mode='clamped_normal',
         limit=1,
         z_lr1=1e-4,
-        z_lr2=1e-4,
-        model_lr=5e-4,
+        z_lr2=1e-5,
+        model_lr=1e-5,
         z_steps1=1600,
-        z_steps2=600,
+        z_steps2=3000,
         run_dir=None,  # IAGAN
         run_name=None,  # datetime or config
         set_seed=True,
@@ -118,7 +118,7 @@ def iagan_recover(
         orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
         if run_name is not None and j == 0:
-            writer.add_image('Start', x_hat.squeeze().clamp(0, 1))
+            writer.add_image('Stage1/Start', x_hat.squeeze().clamp(0, 1))
 
         if run_name is not None:
             writer.add_scalar('Stage1/TRAIN_MSE', train_mse_clamped, j + 1)
@@ -153,7 +153,7 @@ def iagan_recover(
         orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
         if run_name is not None and j == 0:
-            writer.add_image('Start', x_hat.squeeze().clamp(0, 1))
+            writer.add_image('Stage2/Start', x_hat.squeeze().clamp(0, 1))
 
         if run_name is not None:
             writer.add_scalar('Stage2/TRAIN_MSE', train_mse_clamped, j + 1)
@@ -186,15 +186,18 @@ if __name__ == '__main__':
     a.add_argument('--run_name_suffix', default='')
     args = a.parse_args()
 
-    gen = Generator128(64)
-    gen = load_trained_net(
-        gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-              '.n_cuts=0/gen_ckpt.49.pt'))
-    gen = gen.eval().to(DEVICE)
+    def reset_gen():
+        gen = Generator128(64)
+        gen = load_trained_net(
+            gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                  '.n_cuts=0/gen_ckpt.49.pt'))
+        gen = gen.eval().to(DEVICE)
 
-    img_size = 128
+        img_size = 128
+        return gen, img_size
+
+    gen, img_size = reset_gen()
     img_shape = (3, img_size, img_size)
-
     forward_model = GaussianCompressiveSensing(n_measure=2500,
                                                img_shape=img_shape)
     # forward_model = NoOp()
@@ -203,6 +206,7 @@ if __name__ == '__main__':
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
+        gen, img_size = reset_gen()
         orig_img = load_target_image(os.path.join(args.img_dir, img_name),
                                      img_size).to(DEVICE)
         img_basename, _ = os.path.splitext(img_name)
