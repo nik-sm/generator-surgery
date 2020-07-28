@@ -15,10 +15,8 @@ forward_models = {
     },
     'mgan_vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
-            'n_measure': 1200
-        }, {
-            'n_measure': 4000
-        }]
+            'n_measure': x
+        } for x in n_measure_128[:-1]]
     },
     'iagan_began_cs': {
         'GaussianCompressiveSensing': [{
