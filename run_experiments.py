@@ -371,9 +371,7 @@ def iagan_images(args):
 def mgan_images(args):
     os.makedirs(BASE_DIR, exist_ok=True)
 
-    if args.model in [
-            'mgan_began_cs',
-    ]:
+    if args.model in ['mgan_began_cs']:
         gen = Generator128(64)
         gen = load_trained_net(
             gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
@@ -387,6 +385,13 @@ def mgan_images(args):
         gen = gen.eval().to(DEVICE)
         gen = gen.decoder
         img_size = 128
+    elif args.model in ['mgan_dcgan_cs']:
+        gen = dcgan_generator()
+        t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
+                        '.b1_0.5.lr_0.0002.pt'))
+        gen.load_state_dict(t)
+        gen = gen.eval().to(DEVICE)
+        img_size = 64
     else:
         raise NotImplementedError()
 
@@ -512,8 +517,8 @@ if __name__ == '__main__':
     p.add_argument('--overwrite',
                    action='store_true',
                    help='Set flag to overwrite pre-existing files')
-
     args = p.parse_args()
+
     if args.model in [
             'began',
             'began_cs',

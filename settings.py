@@ -5,83 +5,6 @@ n_measure_128 = [
 ]
 
 forward_models = {
-    'mgan_began_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128[:-1]]
-    },
-    'mgan_vanilla_vae_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128[:-1]]
-    },
-    'iagan_began_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128]
-    },
-    'began_opt_error_fake_imgs': {
-        'NoOp': [{}],
-    },
-    'vanilla_vae_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128]
-    },
-    'vanilla_vae': {
-        # 'NoOp': [{}],  # Note - z_lr=1, steps=40 for NoOp
-        'InpaintingScatter': [{
-            'fraction_kept': 0.1
-        }],
-        'SuperResolution': [{
-            'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }],
-    },
-    'beta_vae_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128]
-    },
-    'beta_vae': {
-        # 'NoOp': [{}],  # Note - z_lr=1, steps=40 for NoOp
-        'InpaintingScatter': [{
-            'fraction_kept': 0.1
-        }],
-        'SuperResolution': [{
-            'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }],
-    },
-    'dcgan_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_64]
-    },
-    'dcgan': {
-        # 'NoOp': [{}],  # Note - z_lr=1, steps=100 for NoOp
-        'InpaintingScatter': [{
-            'fraction_kept': 0.1
-        }],
-        'SuperResolution': [{
-            'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }],
-    },
-    'biggan': {
-        # 'NoOp': [{}],  # Note - z_lr=1.5, steps=200 for NoOp
-        'InpaintingScatter': [{
-            'fraction_kept': 0.1
-        }],
-        'SuperResolution': [{
-            'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }],
-    },
     'began_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
@@ -92,8 +15,7 @@ forward_models = {
             'n_measure': 8000
         }],
     },
-    'began': {
-        # 'NoOp': [{}],  # Note - z_lr=1, steps=100 for NoOp
+    'began_inv': {
         'InpaintingScatter': [{
             'fraction_kept': 0.1
         }],
@@ -102,7 +24,100 @@ forward_models = {
             'mode': 'bilinear',
             'align_corners': True
         }],
-    }
+    },
+    'began_noop': {
+        'NoOp': [{}],
+    },
+    'began_opt_error_fake_imgs': {
+        'NoOp': [{}],
+    },
+    'beta_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
+    'beta_vae_inv': {
+        'InpaintingScatter': [{
+            'fraction_kept': 0.1
+        }],
+        'SuperResolution': [{
+            'scale_factor': 0.25,
+            'mode': 'bilinear',
+            'align_corners': True
+        }],
+    },
+    'beta_vae_noop': {
+        'NoOp': [{}],
+    },
+    'biggan_inv': {
+        'InpaintingScatter': [{
+            'fraction_kept': 0.1
+        }],
+        'SuperResolution': [{
+            'scale_factor': 0.25,
+            'mode': 'bilinear',
+            'align_corners': True
+        }],
+    },
+    'biggan_noop': {
+        'NoOp': [{}],
+    },
+    'dcgan_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
+    'dcgan_inv': {
+        'InpaintingScatter': [{
+            'fraction_kept': 0.1
+        }],
+        'SuperResolution': [{
+            'scale_factor': 0.25,
+            'mode': 'bilinear',
+            'align_corners': True
+        }],
+    },
+    'dcgan_noop': {
+        'NoOp': [{}],
+    },
+    'vanilla_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
+    'vanilla_vae_inv': {
+        'InpaintingScatter': [{
+            'fraction_kept': 0.1
+        }],
+        'SuperResolution': [{
+            'scale_factor': 0.25,
+            'mode': 'bilinear',
+            'align_corners': True
+        }],
+    },
+    'vanilla_vae_noop': {
+        'NoOp': [{}],
+    },
+    'mgan_began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128[:-1]]
+    },
+    'mgan_vanilla_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128[:-1]]
+    },
+    'mgan_dcgan_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
+    'iagan_began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
 }
 
 baseline_settings = {
@@ -119,14 +134,14 @@ baseline_settings = {
 }
 
 recovery_settings = {
-    'began_opt_error_fake_imgs': {
-        'z_init_mode': ['clamped_normal'],
-        'limit': [1],
+    'began_cs': {
         'optimizer': 'lbfgs',
-        'n_steps': 100,
+        'n_steps': 25,
         'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [0, 1, 2, 3],
+        'n_cuts_list': [0, 1, 2, 3, 4, 5, 7, 9, 11, 13],
+        'limit': [1],
     },
     'began_cs_other_init': {
         'z_init_mode':
@@ -142,7 +157,7 @@ recovery_settings = {
         1,
         'n_cuts_list': [1, 2, 3],
     },
-    'began': {
+    'began_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
@@ -151,16 +166,52 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 5, 7, 9, 11, 13],
         'limit': [1],
     },
-    'began_cs': {
+    'began_noop': {
+        'optimizer': 'lbfgs',
+        'n_steps': 100,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 5, 7, 9, 11, 13],
+        'limit': [1],
+    },
+    'began_opt_error_fake_imgs': {
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+        'optimizer': 'lbfgs',
+        'n_steps': 100,
+        'z_lr': 1,
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3],
+    },
+    'beta_vae_cs': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5, 7, 9, 11, 13],
+        'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
-    'biggan': {
+    'beta_vae_inv': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'limit': [1],
+    },
+    'beta_vae_noop': {
+        'optimizer': 'lbfgs',
+        'n_steps': 40,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'limit': [1],
+    },
+    'biggan_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1.5,
@@ -169,14 +220,14 @@ recovery_settings = {
         'recover_batch_size': 1,
         'n_cuts_list': [0, 7],
     },
-    'dcgan': {
+    'biggan_noop': {
         'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 1,
+        'n_steps': 200,
+        'z_lr': 1.5,
         'z_init_mode': ['clamped_normal'],
-        'recover_batch_size': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 7],
     },
     'dcgan_cs': {
         'optimizer': 'lbfgs',
@@ -187,13 +238,22 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
-    'vanilla_vae': {
+    'dcgan_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4],
+        'limit': [1],
+    },
+    'dcgan_noop': {
+        'optimizer': 'lbfgs',
+        'n_steps': 100,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
     'vanilla_vae_cs': {
@@ -205,7 +265,7 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
-    'beta_vae': {
+    'vanilla_vae_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
@@ -214,23 +274,13 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
-    'beta_vae_cs': {
+    'vanilla_vae_noop': {
         'optimizer': 'lbfgs',
-        'n_steps': 25,
+        'n_steps': 40,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
-        'limit': [1],
-    },
-    'iagan_began_cs': {
-        'optimizer': 'adam',
-        'z_steps1': 1600,
-        'z_steps2': 600,
-        'z_lr1': 1e-4,
-        'z_lr2': 1e-4,
-        'model_lr': 1e-3,
-        'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
     'mgan_began_cs': {
@@ -250,5 +300,24 @@ recovery_settings = {
         'limit': [1],
         'recover_batch_size': 20,
         'n_cuts_list': [1],
-    }
+    },
+    'mgan_dcgan_cs': {
+        'optimizer': 'adam',
+        'n_steps': 5000,
+        'z_lr': 3e-2,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+        'recover_batch_size': 10,
+        'n_cuts_list': [1],
+    },
+    'iagan_began_cs': {
+        'optimizer': 'adam',
+        'z_steps1': 1600,
+        'z_steps2': 600,
+        'z_lr1': 1e-4,
+        'z_lr2': 1e-4,
+        'model_lr': 1e-3,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+    },
 }

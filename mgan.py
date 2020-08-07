@@ -87,6 +87,8 @@ def mgan_recover(x,
     elif optimizer_type == 'adam':
         optimizer_z = torch.optim.Adam(params, lr=z_lr)
         scheduler_z = None
+        # scheduler_z = torch.optim.lr_scheduler.CosineAnnealingLR(
+        #     optimizer_z, n_steps, 0.05 * z_lr)
         save_img_every_n = 50
     else:
         raise NotImplementedError()

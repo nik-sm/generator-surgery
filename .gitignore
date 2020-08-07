@@ -13,6 +13,7 @@ vae_tensorboard_logs
 figures
 
 # Source images for recovery
+dataset
 images
 
 # Tensorboard logs for recovery runs
@@ -20,6 +21,7 @@ recovery_tensorboard_logs
 
 # Output of recovery runs
 runs
+final_runs
 
 # Tags file
 tags
