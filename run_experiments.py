@@ -102,7 +102,7 @@ def gan_images(args):
                   '.n_cuts=0/gen_ckpt.49.pt'))
         gen = gen.eval().to(DEVICE)
         img_size = 128
-    elif args.model in ['beta_vae', 'beta_vae_cs']:
+    elif args.model.startswith('beta_vae', 'beta_vae_cs'):
         gen = VAE()
         t = torch.load('./vae_checkpoints/vae_bs=128_beta=0.1/epoch_19.pt')
         gen.load_state_dict(t)
@@ -247,18 +247,20 @@ def gan_images(args):
 def iagan_images(args):
     os.makedirs(BASE_DIR, exist_ok=True)
 
-    if args.model in ['iagan_began_cs']:
-        gen = Generator128(64)
-        gen = load_trained_net(
-            gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-                  '.n_cuts=0/gen_ckpt.49.pt'))
-        gen = gen.eval().to(DEVICE)
-        img_size = 128
+    def reset_gen():
+        if args.model in ['iagan_began_cs']:
+            gen = Generator128(64)
+            gen = load_trained_net(
+                gen,
+                ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                 '.n_cuts=0/gen_ckpt.49.pt'))
+            gen = gen.eval().to(DEVICE)
+            img_size = 128
 
-    else:
-        raise NotImplementedError()
+        else:
+            raise NotImplementedError()
+        return gen, img_size
 
-    img_shape = (3, img_size, img_size)
     metadata = recovery_settings[args.model]
 
     z_init_mode_list = metadata['z_init_mode']
@@ -274,6 +276,9 @@ def iagan_images(args):
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
+        # Reset generator weights between each image
+        gen, img_size = reset_gen()
+        img_shape = (3, img_size, img_size)
         # Load image and get filename without extension
         orig_img = load_target_image(os.path.join(args.img_dir, img_name),
                                      img_size).to(DEVICE)

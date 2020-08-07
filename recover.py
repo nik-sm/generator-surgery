@@ -324,6 +324,6 @@ if __name__ == '__main__':
                                     n_cuts=n_cuts,
                                     forward_model=forward_model,
                                     z_lr=1.0,
-                                    n_steps=100,
+                                    n_steps=25,
                                     run_dir='ours',
                                     run_name=img_basename)
