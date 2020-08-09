@@ -153,9 +153,9 @@ def mgan_recover(x,
         writer.add_image('Final', x_hats.clamp(0, 1).squeeze(0))
 
     if return_z1_z2:
-        return x_hats, forward_model(x)[0], {'z1': z1, 'z2': z2}
+        return x_hats.squeeze(0), forward_model(x)[0], {'z1': z1, 'z2': z2}
     else:
-        return x_hats, forward_model(x)[0]
+        return x_hats.squeeze(0), forward_model(x)[0]
 
 
 if __name__ == '__main__':

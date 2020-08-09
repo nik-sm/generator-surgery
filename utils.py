@@ -171,6 +171,9 @@ def parse_results_folder(root='./runs/results'):
             'iagan_began': '128',
             'iagan_vae': '128',
             'iagan_dcgan': '64',
+            'mgan_began': '128',
+            'mgan_vanilla_vae': '128',
+            'mgan_dcgan': '64',
         }
         for k, v in d.items():
             if model_name.startswith(k):
@@ -203,16 +206,20 @@ def parse_results_folder(root='./runs/results'):
                                           'rb') as f:
                                     ps = pickle.load(f)
                             else:
-                                with open(params_path / 'psnr.pkl', 'rb') as f:
-                                    ps1 = pickle.load(f)
-
                                 recovered = torch.load(params_path /
                                                        'recovered.pt')
-                                orig_path = p.parent / 'images' / split / image_name / image_size / 'original.pt'
+                                orig_path = p.parent.joinpath(
+                                    'images', split, image_name, image_size,
+                                    'original.pt')
                                 orig = torch.load(orig_path)
 
+                                if recovered.dim() == 4:
+                                    recovered = recovered.squeeze()
+                                    torch.save(recovered,
+                                               params_path / 'recovered.pt')
+
                                 ps = psnr(orig, recovered.clamp(0, 1))
-                                assert ps >= 0 and ps >= ps1
+
                                 with open(params_path / 'psnr_clamped.pkl',
                                           'wb') as f:
                                     pickle.dump(float(ps), f)
@@ -263,7 +270,6 @@ def get_baseline_results_folder(image_name, model, split, n_measure,
 def parse_baseline_results_folder(root='./runs/baseline_results'):
     rows_list = []
     p = Path(root)
-
     for model_path in p.iterdir():
         model = model_path.name
         if model.endswith('64'):
@@ -288,16 +294,15 @@ def parse_baseline_results_folder(root='./runs/baseline_results'):
                         with open(params_path / 'psnr_clamped.pkl', 'rb') as f:
                             ps = pickle.load(f)
                     else:
-                        with open(params_path / 'psnr.pkl', 'rb') as f:
-                            ps1 = pickle.load(f)
-
                         recovered = np.load(params_path / 'recovered.npy')
-                        orig_path = p.parent / 'images' / split / image_name / image_size / 'original.npy'
+                        orig_path = p.parent.joinpath('images', split,
+                                                      image_name, image_size,
+                                                      'original.npy')
                         orig = np.load(orig_path)
 
                         ps = psnr(torch.from_numpy(orig),
                                   torch.from_numpy(recovered).clamp(0, 1))
-                        assert ps >= 0 and ps >= ps1
+
                         with open(params_path / 'psnr_clamped.pkl', 'wb') as f:
                             pickle.dump(float(ps), f)
 
@@ -322,10 +327,5 @@ def parse_baseline_results_folder(root='./runs/baseline_results'):
 
 
 if __name__ == '__main__':
-
-    # print(psnr_from_mse(torch.tensor(0.025)))
-    # a = "'optimizer=lbfgs.n_steps=25.z_lr=1.2.3.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts=0'"
-    # print(str_to_dict(a))
-
     parse_results_folder('./final_runs/results')
     parse_baseline_results_folder('./final_runs/baseline_results')

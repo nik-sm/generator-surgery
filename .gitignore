@@ -6,8 +6,9 @@ dcgan_tensorboard_logs
 vae_checkpoints
 vae_tensorboard_logs
 
-# Jupyter notebook
+# IDE
 *ipynb_checkpoints
+.vscode
 
 # Generated figure output directory
 figures
