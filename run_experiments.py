@@ -97,9 +97,11 @@ def gan_images(args):
 
     if args.model.startswith('began'):
         gen = Generator128(64)
-        gen = load_trained_net(
-            gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-                  '.n_cuts=0/gen_ckpt.49.pt'))
+        if 'untrained' not in args.model:
+            gen = load_trained_net(
+                gen,
+                ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                 '.n_cuts=0/gen_ckpt.49.pt'))
         gen = gen.eval().to(DEVICE)
         img_size = 128
     elif args.model.startswith('beta_vae', 'beta_vae_cs'):
@@ -522,6 +524,8 @@ if __name__ == '__main__':
             'began_inv',
             'began_noop',
             'began_opt_error_fake_imgs',
+            'began_untrained_cs',
+            'began_restarts_cs',
             'beta_vae_cs',
             'beta_vae_inv',
             'beta_vae_noop',

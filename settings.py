@@ -31,6 +31,20 @@ forward_models = {
     'began_opt_error_fake_imgs': {
         'NoOp': [{}],
     },
+    'began_untrained_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': 2400
+        }, {
+            'n_measure': 8000
+        }]
+    },
+    'began_restarts_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': 2400
+        }, {
+            'n_measure': 8000
+        }]
+    },
     'beta_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
@@ -183,6 +197,24 @@ recovery_settings = {
         'z_lr': 1,
         'recover_batch_size': 1,
         'n_cuts_list': [0, 1, 2, 3],
+    },
+    'began_untrained_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [3],
+        'limit': [1],
+    },
+    'began_restarts_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 100,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 20,
+        'n_cuts_list': [0],
+        'limit': [1],
     },
     'beta_vae_cs': {
         'optimizer': 'lbfgs',

@@ -13,28 +13,28 @@ from tqdm import tqdm, trange
 
 from forward_model import GaussianCompressiveSensing, NoOp
 from model.began import Generator128
-from utils import (get_z_vector, load_target_image, load_trained_net,
+from utils import (get_z_vector, load_target_image, load_trained_net, psnr,
                    psnr_from_mse)
 
 warnings.filterwarnings("ignore")
 
 
-def recover(x,
-            gen,
-            optimizer_type,
-            n_cuts,
-            forward_model,
-            mode='clamped_normal',
-            limit=1,
-            z_lr=0.5,
-            n_steps=2000,
-            batch_size=1,
-            run_dir=None,
-            run_name=None,
-            set_seed=True,
-            disable_tqdm=False,
-            return_z1_z2=False,
-            **kwargs):
+def _recover(x,
+             gen,
+             optimizer_type,
+             n_cuts,
+             forward_model,
+             mode='clamped_normal',
+             limit=1,
+             z_lr=0.5,
+             n_steps=2000,
+             batch_size=1,
+             run_dir=None,
+             run_name=None,
+             set_seed=True,
+             disable_tqdm=False,
+             return_z1_z2=False,
+             **kwargs):
     """
     Args:
         x - input image, torch tensor (C x H x W)
@@ -221,6 +221,65 @@ def recover(x,
         return x_hats[best_idx], forward_model(x)[0], {'z1': z1, 'z2': z2}
     else:
         return x_hats[best_idx], forward_model(x)[0]
+
+
+def recover(x,
+            gen,
+            optimizer_type,
+            n_cuts,
+            forward_model,
+            mode='clamped_normal',
+            limit=1,
+            z_lr=0.5,
+            n_steps=2000,
+            batch_size=1,
+            run_dir=None,
+            run_name=None,
+            set_seed=True,
+            disable_tqdm=False,
+            return_z1_z2=False,
+            **kwargs):
+    if set_seed:
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    else:
+        torch.backends.cudnn.benchmark = True
+
+    best_psnr = 0.
+    best_return_val = None
+
+    for i in trange(batch_size,
+                    desc='Batch',
+                    leave=False,
+                    disable=disable_tqdm):
+        if run_name is not None:
+            current_run_name = f'{run_name}_{i}'
+        else:
+            current_run_name = None
+        return_val = _recover(x=x,
+                              gen=gen,
+                              optimizer_type=optimizer_type,
+                              n_cuts=n_cuts,
+                              forward_model=forward_model,
+                              mode=mode,
+                              limit=limit,
+                              z_lr=z_lr,
+                              n_steps=n_steps,
+                              batch_size=1,
+                              run_dir=run_dir,
+                              run_name=current_run_name,
+                              set_seed=False,
+                              disable_tqdm=disable_tqdm,
+                              return_z1_z2=return_z1_z2,
+                              **kwargs)
+        p = psnr(x, return_val[0])
+        if p > best_psnr:
+            best_psnr = p
+            best_return_val = return_val
+
+    return best_return_val
 
 
 def recover_dct(x_test, n_measure, gamma, size, A=None, noise=None):
