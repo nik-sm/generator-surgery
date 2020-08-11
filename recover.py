@@ -143,7 +143,11 @@ def _recover(x,
 
     # Recover image under forward model
     x = x.expand(batch_size, *x.shape)
-    y_observed = forward_model(x)
+
+    try:
+        y_observed = forward_model(x)
+    except:
+        breakpoint()
     if (isinstance(forward_model, GaussianCompressiveSensing)):
         y_observed += noise
 

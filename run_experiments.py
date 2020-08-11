@@ -95,44 +95,49 @@ def lasso_cs_images(args):
 def gan_images(args):
     os.makedirs(BASE_DIR, exist_ok=True)
 
-    if args.model.startswith('began'):
-        gen = Generator128(64)
-        if 'untrained' not in args.model:
-            gen = load_trained_net(
-                gen,
-                ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-                 '.n_cuts=0/gen_ckpt.49.pt'))
-        gen = gen.eval().to(DEVICE)
-        img_size = 128
-    elif args.model.startswith('beta_vae', 'beta_vae_cs'):
-        gen = VAE()
-        t = torch.load('./vae_checkpoints/vae_bs=128_beta=0.1/epoch_19.pt')
-        gen.load_state_dict(t)
-        gen = gen.eval().to(DEVICE)
-        gen = gen.decoder
-        img_size = 128
-    elif args.model.startswith('biggan'):
-        gen = BigGanSkip().to(DEVICE)
-        img_size = 512
-    elif args.model.startswith('dcgan'):
-        gen = dcgan_generator()
-        t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
-                        '.b1_0.5.lr_0.0002.pt'))
-        gen.load_state_dict(t)
-        gen = gen.eval().to(DEVICE)
-        img_size = 64
+    def reset_gen():
+        if args.model.startswith('began'):
+            gen = Generator128(64)
+            if 'untrained' not in args.model:
+                gen = load_trained_net(
+                    gen,
+                    ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                    '.n_cuts=0/gen_ckpt.49.pt'))
+            gen = gen.eval().to(DEVICE)
+            img_size = 128
+        elif args.model.startswith('beta_vae'):
+            gen = VAE()
+            if 'untrained' not in args.model:
+                t = torch.load('./vae_checkpoints/vae_bs=128_beta=0.1/epoch_19.pt')
+                gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            gen = gen.decoder
+            img_size = 128
+        elif args.model.startswith('biggan'):
+            gen = BigGanSkip().to(DEVICE)
+            img_size = 512
+        elif args.model.startswith('dcgan'):
+            gen = dcgan_generator()
+            if 'untrained' not in args.model:
+                t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
+                                '.b1_0.5.lr_0.0002.pt'))
+                gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            img_size = 64
 
-    elif args.model.startswith('vanilla_vae'):
-        gen = VAE()
-        t = torch.load('./vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
-        gen.load_state_dict(t)
-        gen = gen.eval().to(DEVICE)
-        gen = gen.decoder
-        img_size = 128
+        elif args.model.startswith('vanilla_vae'):
+            gen = VAE()
+            if 'untrained' not in args.model:
+                t = torch.load('./vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
+                gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            gen = gen.decoder
+            img_size = 128
+        else:
+            raise NotImplementedError()
+        return gen, img_size
 
-    else:
-        raise NotImplementedError()
-
+    gen, img_size = reset_gen()
     img_shape = (3, img_size, img_size)
     metadata = recovery_settings[args.model]
     n_cuts_list = metadata['n_cuts_list']
@@ -152,6 +157,9 @@ def gan_images(args):
                          leave=True,
                          disable=args.disable_tqdm):
         # Load image and get filename without extension
+        # If untrained, reset generator for every image
+        if "untrained" in args.model:
+            gen, _ = reset_gen()
         orig_img = load_target_image(os.path.join(args.img_dir, img_name),
                                      img_size).to(DEVICE)
         img_basename, _ = os.path.splitext(img_name)
@@ -534,9 +542,11 @@ if __name__ == '__main__':
             'dcgan_cs',
             'dcgan_inv',
             'dcgan_noop',
+            'dcgan_untrained_cs',
             'vanilla_vae_cs',
             'vanilla_vae_inv',
             'vanilla_vae_noop',
+            'vanilla_vae_untrained_cs',
     ]:
         gan_images(args)
     elif args.model in [

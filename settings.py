@@ -94,6 +94,13 @@ forward_models = {
     'dcgan_noop': {
         'NoOp': [{}],
     },
+    'dcgan_untrained_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': 600
+        }, {
+            'n_measure': 2000
+        }]
+    },
     'vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
@@ -111,6 +118,13 @@ forward_models = {
     },
     'vanilla_vae_noop': {
         'NoOp': [{}],
+    },
+    'vanilla_vae_untrained_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': 2400
+        }, {
+            'n_measure': 8000
+        }]
     },
     'mgan_began_cs': {
         'GaussianCompressiveSensing': [{
@@ -288,6 +302,15 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
+    'dcgan_untrained_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [1],
+        'limit': [1],
+    },
     'vanilla_vae_cs': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
@@ -309,6 +332,15 @@ recovery_settings = {
     'vanilla_vae_noop': {
         'optimizer': 'lbfgs',
         'n_steps': 40,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'limit': [1],
+    },
+    'vanilla_vae_untrained_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
