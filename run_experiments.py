@@ -35,7 +35,7 @@ def lasso_cs_images(args):
     metadata = baseline_settings[args.model]
     assert len(metadata['n_measure']) == len(metadata['lasso_coeff'])
 
-    data_split = Path(args.img_dir).parent
+    data_split = Path(args.img_dir).name
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
                          leave=True,
@@ -162,7 +162,7 @@ def gan_images(args):
 
     forwards = forward_models[args.model]
 
-    data_split = os.path.basename(args.img_dir)
+    data_split = Path(args.img_dir).name
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
                          leave=True,
@@ -292,7 +292,7 @@ def iagan_images(args):
 
     forwards = forward_models[args.model]
 
-    data_split = os.path.basename(args.img_dir)
+    data_split = Path(args.img_dir).name
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
                          leave=True,
@@ -426,7 +426,7 @@ def mgan_images(args):
 
     forwards = forward_models[args.model]
 
-    data_split = os.path.basename(args.img_dir)
+    data_split = Path(args.img_dir).name
     for img_name in tqdm(os.listdir(args.img_dir),
                          desc='Images',
                          leave=True,

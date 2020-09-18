@@ -1084,6 +1084,9 @@ def generator_samples(model):
                     n_cuts=n_cuts).detach().cpu().squeeze(0).numpy().transpose(
                         [1, 2, 0])
 
+            if g.rescale:
+                img = (img + 1) / 2
+
             ax[row, col].imshow(np.clip(img, 0, 1), aspect='auto')
             ax[row, col].set_xticks([])
             ax[row, col].set_yticks([])
