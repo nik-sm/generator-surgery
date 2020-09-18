@@ -81,6 +81,16 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_64]
     },
+    'dcgan_cs_2_update': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
+    'dcgan_cs_1_update_longer': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
     'dcgan_inv': {
         'InpaintingScatter': [{
             'fraction_kept': 0.1
@@ -218,7 +228,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [3],
+        'n_cuts_list': [0, 3],
         'limit': [1],
     },
     'began_restarts_cs': {
@@ -284,6 +294,24 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
+    'dcgan_cs_2_update': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1],
+        'limit': [1],
+    },
+    'dcgan_cs_1_update_longer': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1],
+        'limit': [1],
+    },
     'dcgan_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
@@ -308,7 +336,7 @@ recovery_settings = {
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [1],
+        'n_cuts_list': [0, 1],
         'limit': [1],
     },
     'vanilla_vae_cs': {
@@ -344,7 +372,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'n_cuts_list': [0, 2],
         'limit': [1],
     },
     'mgan_began_cs': {

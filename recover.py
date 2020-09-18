@@ -144,10 +144,7 @@ def _recover(x,
     # Recover image under forward model
     x = x.expand(batch_size, *x.shape)
 
-    try:
-        y_observed = forward_model(x)
-    except:
-        breakpoint()
+    y_observed = forward_model(x)
     if (isinstance(forward_model, GaussianCompressiveSensing)):
         y_observed += noise
 
@@ -251,7 +248,7 @@ def recover(x,
     else:
         torch.backends.cudnn.benchmark = True
 
-    best_psnr = 0.
+    best_psnr = -float("inf")
     best_return_val = None
 
     for i in trange(batch_size,

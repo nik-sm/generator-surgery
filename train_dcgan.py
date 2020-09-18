@@ -23,8 +23,9 @@ opt = parser.parse_args()
 
 opt.outf = './dcgan_checkpoints'
 opt.batch_size = 64
-opt.niter = 25
+opt.niter = 500
 opt.cuda = True
+opt.num_gen_updates = 1
 print(opt)
 
 os.makedirs(opt.outf, exist_ok=True)
@@ -39,7 +40,7 @@ torch.manual_seed(opt.manualSeed)
 torch.backends.cudnn.benchmark = True
 
 nc = 3
-dataloader, _ = get_dataloader('data/celeba64x64_preprocessed',
+dataloader, _ = get_dataloader('dataset/celeba64x64_preprocessed',
                                opt.batch_size,
                                n_train=-1,
                                train=True)
@@ -93,30 +94,34 @@ writer = SummaryWriter(f'./dcgan_tensorboard_logs/{settings}')
 
 for epoch in trange(opt.niter, desc='Epochs', leave=True):
     for i, data in enumerate(tqdm(dataloader, desc='Batches', leave=False)):
+        # real
+        opt.batch_size = data.shape[0]
+        real_cpu = data.to(device)
+        label = torch.full((opt.batch_size, ), real_label, device=device)
+
+        # fake
+        noise = torch.randn(opt.batch_size, *input_shape, device=device)
+        fake = netG(noise, n_cuts=opt.n_cuts)
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
         # train with real
-        netD.zero_grad()
-        real_cpu = data.to(device)
-        opt.batch_size = data.shape[0]
-        label = torch.full((opt.batch_size, ), real_label, device=device)
+        if i % opt.num_gen_updates == 0:
+            netD.zero_grad()
 
-        output = netD(real_cpu)
-        errD_real = criterion(output, label)
-        errD_real.backward()
-        D_x = output.mean().item()
+            output = netD(real_cpu)
+            errD_real = criterion(output, label)
+            errD_real.backward()
+            D_x = output.mean().item()
 
-        # train with fake
-        noise = torch.randn(opt.batch_size, *input_shape, device=device)
-        fake = netG(noise, n_cuts=opt.n_cuts)
-        label.fill_(fake_label)
-        output = netD(fake.detach())
-        errD_fake = criterion(output, label)
-        errD_fake.backward()
-        D_G_z1 = output.mean().item()
-        errD = errD_real + errD_fake
-        optD.step()
+            # train with fake
+            label.fill_(fake_label)
+            output = netD(fake.detach())
+            errD_fake = criterion(output, label)
+            errD_fake.backward()
+            D_G_z1 = output.mean().item()
+            errD = errD_real + errD_fake
+            optD.step()
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))

@@ -99,16 +99,16 @@ def gan_images(args):
         if args.model.startswith('began'):
             gen = Generator128(64)
             if 'untrained' not in args.model:
-                gen = load_trained_net(
-                    gen,
-                    ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                gen = load_trained_net(gen, (
+                    './checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
                     '.n_cuts=0/gen_ckpt.49.pt'))
             gen = gen.eval().to(DEVICE)
             img_size = 128
         elif args.model.startswith('beta_vae'):
             gen = VAE()
             if 'untrained' not in args.model:
-                t = torch.load('./vae_checkpoints/vae_bs=128_beta=0.1/epoch_19.pt')
+                t = torch.load(
+                    './vae_checkpoints/vae_bs=128_beta=0.1/epoch_19.pt')
                 gen.load_state_dict(t)
             gen = gen.eval().to(DEVICE)
             gen = gen.decoder
@@ -119,8 +119,18 @@ def gan_images(args):
         elif args.model.startswith('dcgan'):
             gen = dcgan_generator()
             if 'untrained' not in args.model:
-                t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
-                                '.b1_0.5.lr_0.0002.pt'))
+                if args.model == 'dcgan_cs_2_update':
+                    t = torch.load((
+                        './dcgan_checkpoints/gen_2_updates/netG.epoch_59.n_cuts_0.bs_64'
+                        '.b1_0.5.lr_0.0002.pt'))
+                elif args.model == 'dcgan_cs_1_update_longer':
+                    t = torch.load(
+                        ('./dcgan_checkpoints/netG.epoch_43.n_cuts_0.bs_64'
+                         '.b1_0.5.lr_0.0002.pt'))
+                else:
+                    t = torch.load(
+                        ('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
+                         '.b1_0.5.lr_0.0002.pt'))
                 gen.load_state_dict(t)
             gen = gen.eval().to(DEVICE)
             img_size = 64
@@ -128,7 +138,8 @@ def gan_images(args):
         elif args.model.startswith('vanilla_vae'):
             gen = VAE()
             if 'untrained' not in args.model:
-                t = torch.load('./vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
+                t = torch.load(
+                    './vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
                 gen.load_state_dict(t)
             gen = gen.eval().to(DEVICE)
             gen = gen.decoder
@@ -540,6 +551,8 @@ if __name__ == '__main__':
             'biggan_inv',
             'biggan_noop',
             'dcgan_cs',
+            'dcgan_cs_2_update',
+            'dcgan_cs_1_update_longer',
             'dcgan_inv',
             'dcgan_noop',
             'dcgan_untrained_cs',
