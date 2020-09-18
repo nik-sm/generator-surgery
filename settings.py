@@ -91,6 +91,11 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_64]
     },
+    'dcgan_cs_restarts': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
     'dcgan_inv': {
         'InpaintingScatter': [{
             'fraction_kept': 0.1
@@ -300,6 +305,15 @@ recovery_settings = {
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
         'recover_batch_size': 1,
+        'n_cuts_list': [0, 1],
+        'limit': [1],
+    },
+    'dcgan_cs_restarts': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 2,
         'n_cuts_list': [0, 1],
         'limit': [1],
     },

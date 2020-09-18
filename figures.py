@@ -195,7 +195,8 @@ def create_cs_plot(split):
 
     if split == 'test_celeba':
         split_name = [
-            'test_celeba64_cropped100',
+            # 'test_celeba64_cropped100',
+            'test_celeba64_cropped20',
             'test_celeba128_cropped100',
         ]
     elif split == 'ood-coco':
@@ -204,8 +205,9 @@ def create_cs_plot(split):
     df1 = pd.concat([
         df_baseline.loc[(df_baseline['model'] == 'lasso-dct-64')
                         & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
-                       & (df_results['model'] == 'dcgan_cs') &
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing') &
+                       # & (df_results['model'] == 'dcgan_cs') &
+                       (df_results['model'] == 'dcgan_cs_restarts') &
                        (df_results['n_cuts'].isin([0, 1])) &
                        (df_results['split'].isin(split_name))]
     ])
@@ -1359,7 +1361,7 @@ if __name__ == '__main__':
     # noop_images(2)
 
     # print('CS plots...')
-    # create_cs_plot('test_celeba')
+    create_cs_plot('test_celeba')
     # create_cs_plot('ood-coco')
 
     # print('CS images...')
@@ -1396,6 +1398,6 @@ if __name__ == '__main__':
     # print('Cut training images...')
     # cut_training(4)
 
-    print('Baseline comparison plots...')
-    baseline_comparison('test_celeba')
-    baseline_comparison('ood-coco')
+    # print('Baseline comparison plots...')
+    # baseline_comparison('test_celeba')
+    # baseline_comparison('ood-coco')

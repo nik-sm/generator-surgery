@@ -4,15 +4,17 @@ import shutil
 import warnings
 
 import numpy as np
-
 import torch
 import torch.nn.functional as F
-from forward_model import GaussianCompressiveSensing, NoOp
-from model.began import Generator128
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm, trange
-from utils import (get_z_vector, load_target_image, load_trained_net,
-                   psnr_from_mse)
+
+from forward_model import GaussianCompressiveSensing
+from model.began import Generator128
+from model.dcgan import Generator as dcgan_generator
+from model.vae import VAE
+from utils import (dict_to_str, get_z_vector, load_target_image,
+                   load_trained_net, psnr_from_mse)
 
 warnings.filterwarnings("ignore")
 
@@ -50,26 +52,15 @@ def iagan_recover(
     if (isinstance(forward_model, GaussianCompressiveSensing)):
         n_pixel_bora = 64 * 64 * 3
         n_pixel = np.prod(x.shape)
-        noise = torch.randn(batch_size,
-                            forward_model.n_measure,
-                            device=x.device)
-        noise *= 0.1 * torch.sqrt(
-            torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
+        noise = torch.randn(batch_size, forward_model.n_measure, device=x.device)
+        noise *= 0.1 * torch.sqrt(torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
 
     # z1 is the actual latent code.
     # z2 is the additional input for n_cuts logic (not used here)
-    z1 = torch.nn.Parameter(
-        get_z_vector((batch_size, *z1_dim),
-                     mode=mode,
-                     limit=limit,
-                     device=x.device))
+    z1 = torch.nn.Parameter(get_z_vector((batch_size, *z1_dim), mode=mode, limit=limit, device=x.device))
     params = [z1]
     if len(z2_dim) > 0:
-        z2 = torch.nn.Parameter(
-            get_z_vector((batch_size, *z2_dim),
-                         mode=mode,
-                         limit=limit,
-                         device=x.device))
+        z2 = torch.nn.Parameter(get_z_vector((batch_size, *z2_dim), mode=mode, limit=limit, device=x.device))
         params.append(z2)
     else:
         z2 = None
@@ -91,9 +82,7 @@ def iagan_recover(
     if run_name is not None:
         writer.add_image("Original/Clamp", x.clamp(0, 1))
         if forward_model.viewable:
-            writer.add_image(
-                "Distorted/Clamp",
-                forward_model(x.unsqueeze(0).clamp(0, 1)).squeeze(0))
+            writer.add_image("Distorted/Clamp", forward_model(x.unsqueeze(0).clamp(0, 1)).squeeze(0))
 
     # Make noisy gaussian measurements
     x = x.expand(batch_size, *x.shape)
@@ -112,8 +101,7 @@ def iagan_recover(
         train_mse.backward()
         optimizer_z.step()
 
-        train_mse_clamped = F.mse_loss(
-            forward_model(x_hat.detach().clamp(0, 1)), y_observed)
+        train_mse_clamped = F.mse_loss(forward_model(x_hat.detach().clamp(0, 1)), y_observed)
 
         orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
@@ -123,12 +111,10 @@ def iagan_recover(
         if run_name is not None:
             writer.add_scalar('Stage1/TRAIN_MSE', train_mse_clamped, j + 1)
             writer.add_scalar('Stage1/ORIG_MSE', orig_mse_clamped, j + 1)
-            writer.add_scalar('Stage1/ORIG_PSNR',
-                              psnr_from_mse(orig_mse_clamped), j + 1)
+            writer.add_scalar('Stage1/ORIG_PSNR', psnr_from_mse(orig_mse_clamped), j + 1)
 
             if j % save_img_every_n == 0:
-                writer.add_image('Stage1/Recovered',
-                                 x_hat.squeeze().clamp(0, 1), j + 1)
+                writer.add_image('Stage1/Recovered', x_hat.squeeze().clamp(0, 1), j + 1)
 
     if run_name is not None:
         writer.add_image('Stage1/Final', x_hat.squeeze().clamp(0, 1))
@@ -147,8 +133,7 @@ def iagan_recover(
         optimizer_z.step()
         optimizer_model.step()
 
-        train_mse_clamped = F.mse_loss(
-            forward_model(x_hat.detach().clamp(0, 1)), y_observed)
+        train_mse_clamped = F.mse_loss(forward_model(x_hat.detach().clamp(0, 1)), y_observed)
 
         orig_mse_clamped = F.mse_loss(x_hat.detach().clamp(0, 1), x)
 
@@ -158,21 +143,16 @@ def iagan_recover(
         if run_name is not None:
             writer.add_scalar('Stage2/TRAIN_MSE', train_mse_clamped, j + 1)
             writer.add_scalar('Stage2/ORIG_MSE', orig_mse_clamped, j + 1)
-            writer.add_scalar('Stage2/ORIG_PSNR',
-                              psnr_from_mse(orig_mse_clamped), j + 1)
+            writer.add_scalar('Stage2/ORIG_PSNR', psnr_from_mse(orig_mse_clamped), j + 1)
 
             if j % save_img_every_n == 0:
-                writer.add_image('Stage2/Recovered',
-                                 x_hat.squeeze().clamp(0, 1), j + 1)
+                writer.add_image('Stage2/Recovered', x_hat.squeeze().clamp(0, 1), j + 1)
 
     if run_name is not None:
         writer.add_image('Stage2/Final', x_hat.squeeze().clamp(0, 1))
 
     if return_z1_z2:
-        return x_hat.squeeze(), forward_model(x).squeeze(), {
-            'z1': z1,
-            'z2': z2
-        }
+        return x_hat.squeeze(), forward_model(x).squeeze(), {'z1': z1, 'z2': z2}
     else:
         return x_hat.squeeze(), forward_model(x).squeeze()
 
@@ -186,33 +166,55 @@ if __name__ == '__main__':
     a.add_argument('--run_name_suffix', default='')
     args = a.parse_args()
 
-    def reset_gen():
-        gen = Generator128(64)
-        gen = load_trained_net(
-            gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-                  '.n_cuts=0/gen_ckpt.49.pt'))
-        gen = gen.eval().to(DEVICE)
+    params = {
+        'z_lr1': 1e-4,
+        'z_lr2': 1e-5,
+        'model_lr': 1e-5,
+        'z_steps1': 1600,
+        'z_steps2': 3000,
+    }
 
-        img_size = 128
+    def reset_gen(model):
+        if model == 'began':
+            gen = Generator128(64)
+            gen = load_trained_net(gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                                         '.n_cuts=0/gen_ckpt.49.pt'))
+            gen = gen.eval().to(DEVICE)
+            img_size = 128
+        elif model == 'vae':
+            gen = VAE()
+            t = torch.load('./vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
+            gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            gen = gen.decoder
+            img_size = 128
+        elif model == 'dcgan':
+            gen = dcgan_generator()
+            t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64' '.b1_0.5.lr_0.0002.pt'))
+            gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            img_size = 64
         return gen, img_size
 
-    gen, img_size = reset_gen()
-    img_shape = (3, img_size, img_size)
-    forward_model = GaussianCompressiveSensing(n_measure=2500,
-                                               img_shape=img_shape)
-    # forward_model = NoOp()
+    for model in tqdm(['dcgan', 'vae', 'began'], desc='Models', leave=True):
+        gen, img_size = reset_gen(model)
+        if img_size == 64:
+            n_measures = [600, 2000]
+        else:
+            n_measures = [2400, 8000]
 
-    for img_name in tqdm(os.listdir(args.img_dir),
-                         desc='Images',
-                         leave=True,
-                         disable=args.disable_tqdm):
-        gen, img_size = reset_gen()
-        orig_img = load_target_image(os.path.join(args.img_dir, img_name),
-                                     img_size).to(DEVICE)
-        img_basename, _ = os.path.splitext(img_name)
-        x_hat, x_degraded = iagan_recover(orig_img,
-                                          gen,
-                                          forward_model,
-                                          run_dir='iagan',
-                                          run_name=(img_basename +
-                                                    args.run_name_suffix))
+        for n_measure in tqdm(n_measures, desc='N_measures', leave=False):
+            img_shape = (3, img_size, img_size)
+            forward_model = GaussianCompressiveSensing(n_measure=625, img_shape=img_shape)
+            # forward_model = NoOp()
+
+            for img_name in tqdm(os.listdir(args.img_dir), desc='Images', leave=False, disable=args.disable_tqdm):
+                gen, img_size = reset_gen(model)
+                orig_img = load_target_image(os.path.join(args.img_dir, img_name), img_size).to(DEVICE)
+                img_basename, _ = os.path.splitext(img_name)
+                x_hat, x_degraded = iagan_recover(orig_img,
+                                                  gen,
+                                                  forward_model,
+                                                  run_dir='iagan',
+                                                  run_name=(img_basename + args.run_name_suffix + dict_to_str(params)),
+                                                  **params)

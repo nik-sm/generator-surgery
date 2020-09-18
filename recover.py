@@ -179,6 +179,10 @@ def _recover(x,
             train_mses = train_mses.view(batch_size, -1).mean(1)
             train_mse = train_mses.sum()
 
+        # TODO - due to GPU memory limitations, we recover 1 image at a time
+        # the batch size for _recover() is always 1, and the wrapper iterates through
+        # the desired # of random restarts (choosing the "best in hindsight")
+        # These lines should be removed
         train_mses_clamped = F.mse_loss(forward_model(x_hats.detach().clamp(
             0, 1)),
                                         y_observed,
@@ -189,10 +193,10 @@ def _recover(x,
                                        reduction='none').view(batch_size,
                                                               -1).mean(1)
 
-        best_train_mse, best_idx = train_mses_clamped.min(0)
-        worst_train_mse, worst_idx = train_mses_clamped.max(0)
-        best_orig_mse = orig_mses_clamped[best_idx]
-        worst_orig_mse = orig_mses_clamped[worst_idx]
+        best_orig_mse, best_idx = orig_mses_clamped.min(0)
+        worst_orig_mse, worst_idx = orig_mses_clamped.max(0)
+        best_train_mse = train_mses_clamped[best_idx]
+        worst_train_mse = train_mses_clamped[worst_idx]
 
         if run_name is not None and j == 0:
             writer.add_image('Start', x_hats[best_idx].clamp(0, 1))

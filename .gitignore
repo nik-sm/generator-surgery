@@ -9,6 +9,7 @@ vae_tensorboard_logs
 # IDE
 *ipynb_checkpoints
 .vscode
+*.swp
 
 # Generated figure output directory
 figures

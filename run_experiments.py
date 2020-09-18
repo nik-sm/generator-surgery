@@ -553,6 +553,7 @@ if __name__ == '__main__':
             'dcgan_cs',
             'dcgan_cs_2_update',
             'dcgan_cs_1_update_longer',
+            'dcgan_cs_restarts',
             'dcgan_inv',
             'dcgan_noop',
             'dcgan_untrained_cs',
