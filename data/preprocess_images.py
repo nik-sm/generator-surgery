@@ -74,7 +74,7 @@ def dir_path(string):
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--dataset',
-                   choices=['celeba', 'celeba64x64'],
+                   choices=['celeba128', 'celeba64'],
                    required=True)
     p.add_argument('--input_dir', required=True)
     p.add_argument('--output_dir', required=True)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     p.add_argument('--n', type=int, required=True)
     a = p.parse_args()
 
-    if a.dataset == 'celeba':
+    if a.dataset == 'celeba128':
         transform = transforms.Compose([
             transforms.Lambda(
                 lambda img: transforms.functional.crop(img, 51, 26, 128, 128)),
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         ])
         glob = '*.jpg'
 
-    elif a.dataset == 'celeba64x64':
+    elif a.dataset == 'celeba64':
         transform = transforms.Compose([
             transforms.Lambda(
                 lambda img: transforms.functional.crop(img, 51, 26, 128, 128)),

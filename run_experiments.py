@@ -119,18 +119,9 @@ def gan_images(args):
         elif args.model.startswith('dcgan'):
             gen = dcgan_generator()
             if 'untrained' not in args.model:
-                if args.model == 'dcgan_cs_2_update':
-                    t = torch.load((
-                        './dcgan_checkpoints/gen_2_updates/netG.epoch_59.n_cuts_0.bs_64'
+                t = torch.load(
+                    ('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
                         '.b1_0.5.lr_0.0002.pt'))
-                elif args.model == 'dcgan_cs_1_update_longer':
-                    t = torch.load(
-                        ('./dcgan_checkpoints/netG.epoch_43.n_cuts_0.bs_64'
-                         '.b1_0.5.lr_0.0002.pt'))
-                else:
-                    t = torch.load(
-                        ('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
-                         '.b1_0.5.lr_0.0002.pt'))
                 gen.load_state_dict(t)
             gen = gen.eval().to(DEVICE)
             img_size = 64
@@ -539,6 +530,7 @@ if __name__ == '__main__':
 
     if args.model in [
             'began_cs',
+            'began_cs_n_cuts',
             'began_cs_other_init',
             'began_inv',
             'began_noop',
@@ -551,13 +543,13 @@ if __name__ == '__main__':
             'biggan_inv',
             'biggan_noop',
             'dcgan_cs',
-            'dcgan_cs_2_update',
-            'dcgan_cs_1_update_longer',
+            'dcgan_cs_n_cuts',
             'dcgan_cs_restarts',
             'dcgan_inv',
             'dcgan_noop',
             'dcgan_untrained_cs',
             'vanilla_vae_cs',
+            'vanilla_vae_cs_n_cuts',
             'vanilla_vae_inv',
             'vanilla_vae_noop',
             'vanilla_vae_untrained_cs',

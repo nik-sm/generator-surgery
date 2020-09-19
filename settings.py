@@ -1,11 +1,17 @@
 """Experiment Settings"""
 n_measure_64 = [100, 150, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
 n_measure_128 = [
-    400, 600, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000
+    400, 600, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 
+    # 24000
 ]
 
 forward_models = {
     'began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
+    'began_cs_n_cuts': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
         } for x in n_measure_128]
@@ -81,17 +87,7 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_64]
     },
-    'dcgan_cs_2_update': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_64]
-    },
-    'dcgan_cs_1_update_longer': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_64]
-    },
-    'dcgan_cs_restarts': {
+    'dcgan_cs_n_cuts': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
         } for x in n_measure_64]
@@ -117,6 +113,11 @@ forward_models = {
         }]
     },
     'vanilla_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
+    'vanilla_vae_cs_n_cuts': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
         } for x in n_measure_128]
@@ -178,6 +179,15 @@ baseline_settings = {
 
 recovery_settings = {
     'began_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4, 5, 7, 9, 11, 13],
+        'limit': [1],
+    },
+    'began_cs_n_cuts': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
@@ -295,35 +305,17 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
-        'recover_batch_size': 1,
+        'recover_batch_size': 3,
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
-    'dcgan_cs_2_update': {
+    'dcgan_cs_n_cuts': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
-        'recover_batch_size': 1,
-        'n_cuts_list': [0, 1],
-        'limit': [1],
-    },
-    'dcgan_cs_restarts': {
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 0.1,
-        'z_init_mode': ['clamped_normal'],
-        'recover_batch_size': 2,
-        'n_cuts_list': [0, 1],
-        'limit': [1],
-    },
-    'dcgan_cs_1_update_longer': {
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 0.1,
-        'z_init_mode': ['clamped_normal'],
-        'recover_batch_size': 1,
-        'n_cuts_list': [0, 1],
+        'recover_batch_size': 3,
+        'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
     'dcgan_inv': {
@@ -354,6 +346,15 @@ recovery_settings = {
         'limit': [1],
     },
     'vanilla_vae_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'z_init_mode': ['clamped_normal'],
+        'recover_batch_size': 1,
+        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'limit': [1],
+    },
+    'vanilla_vae_cs_n_cuts': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
