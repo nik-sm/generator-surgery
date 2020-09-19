@@ -17,7 +17,7 @@ from utils import (get_z_vector, load_target_image, load_trained_net,
 warnings.filterwarnings("ignore")
 
 
-def mgan_recover(x,
+def _mgan_recover(x,
                  gen,
                  n_cuts,
                  forward_model,
@@ -26,12 +26,10 @@ def mgan_recover(x,
                  limit=1,
                  z_lr=1,
                  n_steps=2000,
-                 recover_batch_size=20,
+                 z_number=20,
                  run_dir=None,
                  run_name=None,
-                 set_seed=True,
                  disable_tqdm=False,
-                 return_z1_z2=False,
                  **kwargs):
     """
     Args:
@@ -42,14 +40,6 @@ def mgan_recover(x,
         n_steps - number of optimization steps during recovery
         run_name - use None for no logging
     """
-
-    if set_seed:
-        torch.manual_seed(0)
-        np.random.seed(0)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-    else:
-        torch.backends.cudnn.benchmark = True
 
     z1_dim, _ = gen.input_shapes[0]
     _, z2_dim = gen.input_shapes[n_cuts]
@@ -62,12 +52,12 @@ def mgan_recover(x,
             torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
 
     z1 = torch.nn.Parameter(
-        get_z_vector((recover_batch_size, *z1_dim),
+        get_z_vector((z_number, *z1_dim),
                      mode=mode,
                      limit=limit,
                      device=x.device))
     alpha = torch.nn.Parameter(
-        get_z_vector((recover_batch_size, gen.input_shapes[n_cuts][0][0]),
+        get_z_vector((z_number, gen.input_shapes[n_cuts][0][0]),
                      mode=mode,
                      limit=limit,
                      device=x.device))
@@ -152,11 +142,55 @@ def mgan_recover(x,
     if run_name is not None:
         writer.add_image('Final', x_hats.clamp(0, 1).squeeze(0))
 
-    if return_z1_z2:
-        return x_hats.squeeze(0), forward_model(x)[0], {'z1': z1, 'z2': z2}
-    else:
-        return x_hats.squeeze(0), forward_model(x)[0]
+    return x_hats.squeeze(0), forward_model(x)[0], train_mse_clamped
 
+def mgan_recover(x,
+                 gen,
+                 n_cuts,
+                 forward_model,
+                 optimizer_type='sgd',
+                 mode='zero',
+                 limit=1,
+                 z_lr=1,
+                 n_steps=2000,
+                 z_number=20,
+                 restarts=1,
+                 run_dir=None,
+                 run_name=None,
+                 disable_tqdm=False,
+                 **kwargs):
+
+    best_psnr = -float("inf")
+    best_return_val = None
+
+    for i in trange(restarts,
+                    desc='Restarts',
+                    leave=False,
+                    disable=disable_tqdm):
+        if run_name is not None:
+            current_run_name = f'{run_name}_{i}'
+        else:
+            current_run_name = None
+        return_val = _mgan_recover(x=x,
+                              gen=gen,
+                              n_cuts=n_cuts,
+                              forward_model=forward_model,
+                              optimizer_type=optimizer_type,
+                              mode=mode,
+                              limit=limit,
+                              z_lr=z_lr,
+                              n_steps=n_steps,
+                                   z_number=z_number,
+                              run_dir=run_dir,
+                              run_name=current_run_name,
+                              disable_tqdm=disable_tqdm,
+                              **kwargs)
+        p = psnr_from_mse(return_val[2])
+        if p > best_psnr:
+            best_psnr = p
+            best_return_val = return_val
+
+    return best_return_val
 
 if __name__ == '__main__':
     DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'

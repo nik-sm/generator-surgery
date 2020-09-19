@@ -85,51 +85,36 @@ def opt_error_plot():
                 bbox_inches='tight')
 
 
-# TODO: doesn't work for cropped images yet
 def best_cuts_plot(model):
     def split_fn(row):
         if 'celeba' in row['split']:
-            return 'Test'
-        elif row['split'] == 'ood-coco20':
-            return 'OOD'
+            return 'CelebA'
+        elif 'ood' in row['split']:
+            return 'COCO'
         else:
             return ''
 
-    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
-        df_results = pickle.load(f)
-
-    df = df_results.loc[((df_results['fm'] == 'InpaintingScatter') &
-                         (df_results['fraction_kept'] == 0.10)) |
-                        ((df_results['fm'] == 'SuperResolution') &
-                         (df_results['scale_factor'] == 0.25))]
-    df = df.loc[df['model'] == model]
-    df = df.loc[df['split'].isin(
-        ['test_celeba64_cropped20', 'test_celeba128_cropped20', 'ood-coco20'])]
-
-    df['split_name'] = df.apply(lambda row: split_fn(row), axis=1)
+    df_results = pd.read_pickle('./final_runs/processed_results/df_results.pkl')
+    df = df_results.loc[df_results['model'] == model]
+    df.loc[:, 'split_name'] = df.apply(lambda row: split_fn(row), axis=1)
 
     sns.set(rc={'figure.figsize': (16, 9)})
     sns.set_style('ticks')
     sns.set_context('poster', font_scale=1.8)
     filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
-    legend_order = ['Test', 'OOD']
-    if model == 'dcgan_inv':
+    legend_order = ['CelebA', 'COCO']
+    if model == 'dcgan_cs_n_cuts':
         title = 'DCGAN'
         xlim = (0, 4)
         xticks = list(range(0, 5))
         ylim = (5, 35)
-    elif model == 'began_inv':
+    elif model == 'began_cs_n_cuts':
         title = 'BEGAN'
         xlim = (0, 13)
         xticks = list(range(0, 14))
         ylim = (5, 35)
-    elif model == 'vanilla_vae_inv':
+    elif model == 'vanilla_vae_cs_n_cuts':
         title = 'VAE'
-        xlim = (0, 5)
-        xticks = list(range(0, 6))
-        ylim = (5, 35)
-    elif model == 'beta_vae_inv':
-        title = 'β-VAE'
         xlim = (0, 5)
         xticks = list(range(0, 6))
         ylim = (5, 35)
@@ -424,8 +409,7 @@ def inverse_plot(split):
                 ((df['model'] == 'beta_vae_inv') & (df['n_cuts'].isin([0, 2])))
                 | ((df['model'] == 'dcgan_inv') & (df['n_cuts'].isin([0, 1])))]
 
-    df.loc[:, 'model_name'] = pd.Series(df.apply(lambda row: _name_fn(row),
-                                                 axis=1),
+    df.loc[:, 'model_name'] = pd.Series(df.apply(lambda row: _name_fn(row), axis=1),
                                         index=df.index).values
     df.loc[:, 'type'] = pd.Series(df.apply(lambda row: _type_fn(row), axis=1),
                                   index=df.index).values
@@ -1364,7 +1348,7 @@ if __name__ == '__main__':
     # noop_images(2)
 
     # print('CS plots...')
-    create_cs_plot('test_celeba')
+    # create_cs_plot('test_celeba')
     # create_cs_plot('ood-coco')
 
     # print('CS images...')
@@ -1384,10 +1368,10 @@ if __name__ == '__main__':
     # cs_other_init_plot('test_celeba128_cropped100', 8000)
     # cs_other_init_plot('ood-coco100', 8000)
 
-    # print('Best Cuts plots...')
-    # best_cuts_plot('dcgan_inv')
-    # best_cuts_plot('began_inv')
-    # best_cuts_plot('vanilla_vae_inv')
+    print('Best Cuts plots...')
+    best_cuts_plot('dcgan_cs_n_cuts')
+    best_cuts_plot('began_cs_n_cuts')
+    best_cuts_plot('vanilla_vae_cs_n_cuts')
 
     # print('Generator samples...')
     # generator_samples('dcgan')

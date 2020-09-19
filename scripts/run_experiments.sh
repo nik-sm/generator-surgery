@@ -4,5 +4,7 @@
 
 MODEL=$1
 
-CUDA_VISIBLE_DEVICES=$3 python run_experiments.py --img_dir $2 \
---model ${MODEL} \
+CUDA_VISIBLE_DEVICES=$3 python run_experiments.py \
+    --img_dir $2 \
+    --model ${MODEL} \
+    --set_seed

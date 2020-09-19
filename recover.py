@@ -28,10 +28,8 @@ def _recover(x,
              limit=1,
              z_lr=0.5,
              n_steps=2000,
-             batch_size=1,
              run_dir=None,
              run_name=None,
-             set_seed=True,
              disable_tqdm=False,
              return_z1_z2=False,
              **kwargs):
@@ -44,13 +42,8 @@ def _recover(x,
         run_name - use None for no logging
     """
 
-    if set_seed:
-        torch.manual_seed(0)
-        np.random.seed(0)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-    else:
-        torch.backends.cudnn.benchmark = True
+    # Keep batch_size = 1
+    batch_size = 1
 
     z1_dim, z2_dim = gen.input_shapes[n_cuts]
 
@@ -72,7 +65,7 @@ def _recover(x,
                                   A=forward_model.A.cpu().numpy(),
                                   noise=noise.cpu().numpy())
 
-        _, _, z1_z2_dict = recover(torch.tensor(lasso_x_hat.transpose(
+        _, _, _, z1_z2_dict = recover(torch.tensor(lasso_x_hat.transpose(
             [2, 0, 1]),
                                                 dtype=torch.float).to(DEVICE),
                                    gen,
@@ -179,10 +172,6 @@ def _recover(x,
             train_mses = train_mses.view(batch_size, -1).mean(1)
             train_mse = train_mses.sum()
 
-        # TODO - due to GPU memory limitations, we recover 1 image at a time
-        # the batch size for _recover() is always 1, and the wrapper iterates through
-        # the desired # of random restarts (choosing the "best in hindsight")
-        # These lines should be removed
         train_mses_clamped = F.mse_loss(forward_model(x_hats.detach().clamp(
             0, 1)),
                                         y_observed,
@@ -193,10 +182,13 @@ def _recover(x,
                                        reduction='none').view(batch_size,
                                                               -1).mean(1)
 
-        best_orig_mse, best_idx = orig_mses_clamped.min(0)
-        worst_orig_mse, worst_idx = orig_mses_clamped.max(0)
-        best_train_mse = train_mses_clamped[best_idx]
-        worst_train_mse = train_mses_clamped[worst_idx]
+
+        # batch_size = 1, so best and worst are meaningless.
+        # Restarts is handled in outer function
+        best_train_mse, best_idx  = train_mses_clamped.min(0)
+        worst_train_mse, worst_idx = train_mses_clamped.max(0)
+        best_orig_mse = orig_mses_clamped[best_idx]
+        worst_orig_mse = orig_mses_clamped[worst_idx]
 
         if run_name is not None and j == 0:
             writer.add_image('Start', x_hats[best_idx].clamp(0, 1))
@@ -223,9 +215,9 @@ def _recover(x,
         writer.add_image('Final', x_hats[best_idx].clamp(0, 1))
 
     if return_z1_z2:
-        return x_hats[best_idx], forward_model(x)[0], {'z1': z1, 'z2': z2}
+        return x_hats[best_idx], forward_model(x)[0], best_train_mse, {'z1': z1, 'z2': z2}
     else:
-        return x_hats[best_idx], forward_model(x)[0]
+        return x_hats[best_idx], forward_model(x)[0], best_train_mse 
 
 
 def recover(x,
@@ -237,26 +229,18 @@ def recover(x,
             limit=1,
             z_lr=0.5,
             n_steps=2000,
-            batch_size=1,
+            restarts=1,
             run_dir=None,
             run_name=None,
-            set_seed=True,
             disable_tqdm=False,
             return_z1_z2=False,
             **kwargs):
-    if set_seed:
-        torch.manual_seed(0)
-        np.random.seed(0)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-    else:
-        torch.backends.cudnn.benchmark = True
 
     best_psnr = -float("inf")
     best_return_val = None
 
-    for i in trange(batch_size,
-                    desc='Batch',
+    for i in trange(restarts,
+                    desc='Restarts',
                     leave=False,
                     disable=disable_tqdm):
         if run_name is not None:
@@ -272,14 +256,12 @@ def recover(x,
                               limit=limit,
                               z_lr=z_lr,
                               n_steps=n_steps,
-                              batch_size=1,
                               run_dir=run_dir,
                               run_name=current_run_name,
-                              set_seed=False,
                               disable_tqdm=disable_tqdm,
                               return_z1_z2=return_z1_z2,
                               **kwargs)
-        p = psnr(x, return_val[0])
+        p = psnr_from_mse(return_val[2])
         if p > best_psnr:
             best_psnr = p
             best_return_val = return_val
@@ -382,7 +364,7 @@ if __name__ == '__main__':
         orig_img = load_target_image(os.path.join(args.img_dir, img_name),
                                      img_size).to(DEVICE)
         img_basename, _ = os.path.splitext(img_name)
-        x_hat, x_degraded = recover(orig_img,
+        x_hat, x_degraded, _ = recover(orig_img,
                                     gen,
                                     optimizer_type='lbfgs',
                                     n_cuts=n_cuts,

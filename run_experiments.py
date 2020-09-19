@@ -26,6 +26,13 @@ BASE_DIR = './runs'
 
 
 def lasso_cs_images(args):
+
+    if args.set_seed:
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     os.makedirs(BASE_DIR, exist_ok=True)
     if args.model in ['lasso-dct-64', 'lasso-dct-128']:
         recover_fn = recover_dct
@@ -36,7 +43,7 @@ def lasso_cs_images(args):
     assert len(metadata['n_measure']) == len(metadata['lasso_coeff'])
 
     data_split = Path(args.img_dir).name
-    for img_name in tqdm(os.listdir(args.img_dir),
+    for img_name in tqdm(sorted(os.listdir(args.img_dir)),
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
@@ -93,6 +100,12 @@ def lasso_cs_images(args):
 
 
 def gan_images(args):
+    if args.set_seed:
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     os.makedirs(BASE_DIR, exist_ok=True)
 
     def reset_gen():
@@ -154,7 +167,7 @@ def gan_images(args):
     forwards = forward_models[args.model]
 
     data_split = Path(args.img_dir).name
-    for img_name in tqdm(os.listdir(args.img_dir),
+    for img_name in tqdm(sorted(os.listdir(args.img_dir)),
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
@@ -222,12 +235,12 @@ def gan_images(args):
                         else:
                             current_run_name = None
 
-                        recovered_img, distorted_img = recover(
+                        recovered_img, distorted_img, _ = recover(
                             orig_img, gen, metadata['optimizer'], n_cuts,
                             forward_model, z_init_mode, limit,
                             metadata['z_lr'], metadata['n_steps'],
-                            metadata['recover_batch_size'], args.run_dir,
-                            current_run_name, True, args.disable_tqdm)
+                            metadata['restarts'], args.run_dir,
+                            current_run_name, args.disable_tqdm)
 
                         # Make images folder
                         img_folder = get_images_folder(split=data_split,
@@ -257,6 +270,12 @@ def gan_images(args):
 
 
 def iagan_images(args):
+    if args.set_seed:
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     os.makedirs(BASE_DIR, exist_ok=True)
 
     def reset_gen():
@@ -284,7 +303,7 @@ def iagan_images(args):
     forwards = forward_models[args.model]
 
     data_split = Path(args.img_dir).name
-    for img_name in tqdm(os.listdir(args.img_dir),
+    for img_name in tqdm(sorted(os.listdir(args.img_dir)),
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
@@ -343,12 +362,12 @@ def iagan_images(args):
                     else:
                         current_run_name = None
 
-                    recovered_img, distorted_img = iagan_recover(
+                    recovered_img, distorted_img, _ = iagan_recover(
                         orig_img, gen, forward_model, metadata['optimizer'],
                         z_init_mode, limit, metadata['z_lr1'],
                         metadata['z_lr2'], metadata['model_lr'],
-                        metadata['z_steps1'], metadata['z_steps2'],
-                        args.run_dir, current_run_name, True,
+                        metadata['z_steps1'], metadata['z_steps2'], metadata['restarts'],
+                        args.run_dir, current_run_name, 
                         args.disable_tqdm)
 
                     # Make images folder
@@ -378,6 +397,12 @@ def iagan_images(args):
 
 
 def mgan_images(args):
+    if args.set_seed:
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     os.makedirs(BASE_DIR, exist_ok=True)
 
     if args.model in ['mgan_began_cs']:
@@ -418,7 +443,7 @@ def mgan_images(args):
     forwards = forward_models[args.model]
 
     data_split = Path(args.img_dir).name
-    for img_name in tqdm(os.listdir(args.img_dir),
+    for img_name in tqdm(sorted(os.listdir(args.img_dir)),
                          desc='Images',
                          leave=True,
                          disable=args.disable_tqdm):
@@ -482,12 +507,12 @@ def mgan_images(args):
                         else:
                             current_run_name = None
 
-                        recovered_img, distorted_img = mgan_recover(
+                        recovered_img, distorted_img, _ = mgan_recover(
                             orig_img, gen, n_cuts, forward_model,
                             metadata['optimizer'], z_init_mode, limit,
-                            metadata['z_lr'], metadata['n_steps'],
-                            metadata['recover_batch_size'], args.run_dir,
-                            current_run_name, True, args.disable_tqdm)
+                            metadata['z_lr'], metadata['n_steps'], metadata['z_number'],
+                            metadata['restarts'], args.run_dir,
+                            current_run_name, args.disable_tqdm)
 
                         # Make images folder
                         img_folder = get_images_folder(split=data_split,
@@ -526,6 +551,7 @@ if __name__ == '__main__':
     p.add_argument('--overwrite',
                    action='store_true',
                    help='Set flag to overwrite pre-existing files')
+    p.add_argument('--set_seed', action='store_true')
     args = p.parse_args()
 
     if args.model in [

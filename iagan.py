@@ -19,7 +19,7 @@ from utils import (dict_to_str, get_z_vector, load_target_image,
 warnings.filterwarnings("ignore")
 
 
-def iagan_recover(
+def _iagan_recover(
         x,
         gen,
         forward_model,
@@ -33,19 +33,11 @@ def iagan_recover(
         z_steps2=3000,
         run_dir=None,  # IAGAN
         run_name=None,  # datetime or config
-        set_seed=True,
         disable_tqdm=False,
-        return_z1_z2=False,
         **kwargs):
-    batch_size = 1
 
-    if set_seed:
-        torch.manual_seed(0)
-        np.random.seed(0)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-    else:
-        torch.backends.cudnn.benchmark = True
+    # Keep batch_size = 1
+    batch_size = 1
 
     z1_dim, z2_dim = gen.input_shapes[0]  # n_cuts = 0
 
@@ -151,11 +143,57 @@ def iagan_recover(
     if run_name is not None:
         writer.add_image('Stage2/Final', x_hat.squeeze().clamp(0, 1))
 
-    if return_z1_z2:
-        return x_hat.squeeze(), forward_model(x).squeeze(), {'z1': z1, 'z2': z2}
-    else:
-        return x_hat.squeeze(), forward_model(x).squeeze()
+    return x_hat.squeeze(), forward_model(x).squeeze(), train_mse_clamped
 
+def iagan_recover(x,
+            gen,
+            forward_model,
+            optimizer_type,
+            mode='clamped_normal',
+            limit=1,
+        z_lr1=1e-4,
+        z_lr2=1e-5,
+        model_lr=1e-5,
+        z_steps1=1600,
+        z_steps2=3000,
+                  restarts=1,
+        run_dir=None,  
+        run_name=None,
+        disable_tqdm=False,
+            **kwargs):
+
+    best_psnr = -float("inf")
+    best_return_val = None
+
+    for i in trange(restarts,
+                    desc='Restarts',
+                    leave=False,
+                    disable=disable_tqdm):
+        if run_name is not None:
+            current_run_name = f'{run_name}_{i}'
+        else:
+            current_run_name = None
+        return_val = _iagan_recover(x=x,
+                              gen=gen,
+                              forward_model=forward_model,
+                              optimizer_type=optimizer_type,
+                              mode=mode,
+                              limit=limit,
+                            z_lr1=z_lr1,
+                            z_lr2=z_lr2,
+                            model_lr=model_lr,
+                            z_steps1=z_steps1,
+                            z_steps2=z_steps2,
+                              run_dir=run_dir,
+                              run_name=current_run_name,
+                              disable_tqdm=disable_tqdm,
+                              **kwargs)
+        p = psnr_from_mse(return_val[2])
+        if p > best_psnr:
+            best_psnr = p
+            best_return_val = return_val
+
+    return best_return_val
 
 if __name__ == '__main__':
     DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'

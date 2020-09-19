@@ -157,7 +157,7 @@ def get_results_folder(image_name, model, n_cuts, split, forward_model,
             image_name / str(forward_model) / recovery_params)
 
 
-def parse_results_folder(root='./runs/results'):
+def parse_results_folder(root='./final_runs/results'):
     rows_list = []
     p = Path(root)
 

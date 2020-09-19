@@ -9,4 +9,5 @@ CUDA_VISIBLE_DEVICES=$3 python run_experiments.py \
     --model ${MODEL} \
     --run_dir ${MODEL} \
     --run_name test \
+    --set_seed \
     --overwrite
