@@ -1,6 +1,5 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128_TEST = [2400, 8000]
 n_measure_128 = [
     400,
     800,
@@ -166,7 +165,7 @@ forward_models = {
     'iagan_vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_128_TEST]
+        } for x in n_measure_128]
     },
 }
 
