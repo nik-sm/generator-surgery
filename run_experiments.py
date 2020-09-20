@@ -356,7 +356,12 @@ def iagan_images(args):
                     if args.run_name is not None:
                         current_run_name = (
                             f'{img_basename}'
-                            f'.{forward_model}.z_lr={metadata["z_lr"]}'
+                            f'.{forward_model}'
+                            f'.z_steps1={metadata["z_steps1"]}'
+                            f'.z_steps2={metadata["z_steps2"]}'
+                            f'.z_lr1={metadata["z_lr1"]}'
+                            f'.z_lr2={metadata["z_lr2"]}'
+                            f'.model_lr={metadata["model_lr"]}'
                             f'.z_init={z_init_mode}.limit={limit}'
                             f'.{args.run_name}')
                     else:
@@ -586,7 +591,11 @@ if __name__ == '__main__':
             'lasso-dct-128',
     ]:
         lasso_cs_images(args)
-    elif args.model in ['iagan_began_cs']:
+    elif args.model in [
+            'iagan_began_cs',
+            'iagan_dcgan_cs',
+            'iagan_vanilla_vae_cs',
+            ]:
         iagan_images(args)
     elif args.model in [
             'mgan_began_cs',

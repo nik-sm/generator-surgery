@@ -1,6 +1,9 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128 = [400, 600, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
+n_measure_128 = [400, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
+
+n_measure_64_TEST = [600, 2000]
+n_measure_128_TEST = [2400, 8000]
 
 forward_models = {
     'began_cs': {
@@ -162,17 +165,17 @@ forward_models = {
     'iagan_began_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_128]
+        } for x in n_measure_128_TEST]
     },
     'iagan_dcgan_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_64]
+        } for x in n_measure_64_TEST]
     },
     'iagan_vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_64]
+        } for x in n_measure_64_TEST]
     },
 }
 
@@ -439,7 +442,7 @@ recovery_settings = {
     'iagan_began_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 600,
+        'z_steps2': 1600,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
@@ -450,7 +453,7 @@ recovery_settings = {
     'iagan_dcgan_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 600,
+        'z_steps2': 1600,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
@@ -460,7 +463,7 @@ recovery_settings = {
     'iagan_vanilla_vae_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 600,
+        'z_steps2': 1600,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
