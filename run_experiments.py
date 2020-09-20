@@ -134,7 +134,7 @@ def gan_images(args):
             if 'untrained' not in args.model:
                 t = torch.load(
                     ('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
-                        '.b1_0.5.lr_0.0002.pt'))
+                     '.b1_0.5.lr_0.0002.pt'))
                 gen.load_state_dict(t)
             gen = gen.eval().to(DEVICE)
             img_size = 64
@@ -371,8 +371,8 @@ def iagan_images(args):
                         orig_img, gen, forward_model, metadata['optimizer'],
                         z_init_mode, limit, metadata['z_lr1'],
                         metadata['z_lr2'], metadata['model_lr'],
-                        metadata['z_steps1'], metadata['z_steps2'], metadata['restarts'],
-                        args.run_dir, current_run_name, 
+                        metadata['z_steps1'], metadata['z_steps2'],
+                        metadata['restarts'], args.run_dir, current_run_name,
                         args.disable_tqdm)
 
                     # Make images folder
@@ -515,9 +515,9 @@ def mgan_images(args):
                         recovered_img, distorted_img, _ = mgan_recover(
                             orig_img, gen, n_cuts, forward_model,
                             metadata['optimizer'], z_init_mode, limit,
-                            metadata['z_lr'], metadata['n_steps'], metadata['z_number'],
-                            metadata['restarts'], args.run_dir,
-                            current_run_name, args.disable_tqdm)
+                            metadata['z_lr'], metadata['n_steps'],
+                            metadata['z_number'], metadata['restarts'],
+                            args.run_dir, current_run_name, args.disable_tqdm)
 
                         # Make images folder
                         img_folder = get_images_folder(split=data_split,
@@ -595,7 +595,7 @@ if __name__ == '__main__':
             'iagan_began_cs',
             'iagan_dcgan_cs',
             'iagan_vanilla_vae_cs',
-            ]:
+    ]:
         iagan_images(args)
     elif args.model in [
             'mgan_began_cs',

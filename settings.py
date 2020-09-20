@@ -1,9 +1,19 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128 = [400, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
-
 n_measure_64_TEST = [600, 2000]
 n_measure_128_TEST = [2400, 8000]
+n_measure_128 = [
+    400,
+    800,
+    1200,
+    1600,
+    2400,
+    4000,
+    8000,
+    12000,
+    16000,
+    # 24000
+]
 
 forward_models = {
     'began_cs': {
@@ -194,7 +204,8 @@ recovery_settings = {
         'limit': [1],
     },
     'began_cs_other_init': {
-        'z_init_mode': ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
+        'z_init_mode':
+        ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
         'limit': [1, 1, 5, 10, None],
         'optimizer': 'lbfgs',
         'n_steps': 25,
@@ -397,31 +408,33 @@ recovery_settings = {
     'iagan_began_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 1600,
+        'z_steps2': 5000,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
-        'restarts': 3,
+        'restarts': 1,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
     'iagan_dcgan_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 1600,
+        'z_steps2': 5000,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
+        'restarts': 1,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
     'iagan_vanilla_vae_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 1600,
+        'z_steps2': 5000,
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
+        'restarts': 1,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
