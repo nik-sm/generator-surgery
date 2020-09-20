@@ -1,6 +1,5 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_64_TEST = [600, 2000]
 n_measure_128_TEST = [2400, 8000]
 n_measure_128 = [
     400,
@@ -154,20 +153,20 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_64]
     },
-    'iagan_began_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128_TEST]
-    },
     'iagan_dcgan_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_64_TEST]
+        } for x in n_measure_64]
+    },
+    'iagan_began_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
     },
     'iagan_vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_64_TEST]
+        } for x in n_measure_128_TEST]
     },
 }
 
@@ -207,10 +206,14 @@ recovery_settings = {
         'z_init_mode':
         ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
         'limit': [1, 1, 5, 10, None],
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 1,
-        'restarts': 3,
+        'optimizer':
+        'lbfgs',
+        'n_steps':
+        25,
+        'z_lr':
+        1,
+        'restarts':
+        3,
         'n_cuts_list': [1, 2, 3],
     },
     'began_inv': {
@@ -405,36 +408,36 @@ recovery_settings = {
         'restarts': 3,
         'n_cuts_list': [1],
     },
-    'iagan_began_cs': {
-        'optimizer': 'adam',
-        'z_steps1': 1600,
-        'z_steps2': 5000,
-        'z_lr1': 1e-4,
-        'z_lr2': 1e-5,
-        'model_lr': 1e-5,
-        'restarts': 1,
-        'z_init_mode': ['clamped_normal'],
-        'limit': [1],
-    },
     'iagan_dcgan_cs': {
         'optimizer': 'adam',
         'z_steps1': 1600,
-        'z_steps2': 5000,
-        'z_lr1': 1e-4,
-        'z_lr2': 1e-5,
-        'model_lr': 1e-5,
-        'restarts': 1,
+        'z_steps2': 600,
+        'z_lr1': 0.1,
+        'z_lr2': 1e-4,
+        'model_lr': 1e-4,
+        'restarts': 3,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+    },
+    'iagan_began_cs': {
+        'optimizer': 'adam',
+        'z_steps1': 1600,
+        'z_steps2': 600,
+        'z_lr1': 0.1,
+        'z_lr2': 1e-4,
+        'model_lr': 1e-4,
+        'restarts': 3,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
     'iagan_vanilla_vae_cs': {
         'optimizer': 'adam',
-        'z_steps1': 1600,
-        'z_steps2': 5000,
-        'z_lr1': 1e-4,
-        'z_lr2': 1e-5,
-        'model_lr': 1e-5,
-        'restarts': 1,
+        'z_steps1': 1000,
+        'z_steps2': 600,
+        'z_lr1': 0.1,
+        'z_lr2': 1e-4,
+        'model_lr': 1e-4,
+        'restarts': 3,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },

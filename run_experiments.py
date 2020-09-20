@@ -270,6 +270,7 @@ def gan_images(args):
 
 
 def iagan_images(args):
+
     if args.set_seed:
         torch.manual_seed(0)
         np.random.seed(0)
@@ -287,7 +288,21 @@ def iagan_images(args):
                  '.n_cuts=0/gen_ckpt.49.pt'))
             gen = gen.eval().to(DEVICE)
             img_size = 128
+        elif args.model in ['iagan_dcgan_cs']:
+            gen = dcgan_generator()
+            t = torch.load(('./dcgan_checkpoints/netG.epoch_24.n_cuts_0.bs_64'
+                            '.b1_0.5.lr_0.0002.pt'))
+            gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            img_size = 64
 
+        elif args.model in ['iagan_vanilla_vae_cs']:
+            gen = VAE()
+            t = torch.load('./vae_checkpoints/vae_bs=128_beta=1.0/epoch_19.pt')
+            gen.load_state_dict(t)
+            gen = gen.eval().to(DEVICE)
+            gen = gen.decoder
+            img_size = 128
         else:
             raise NotImplementedError()
         return gen, img_size
@@ -592,8 +607,8 @@ if __name__ == '__main__':
     ]:
         lasso_cs_images(args)
     elif args.model in [
-            'iagan_began_cs',
             'iagan_dcgan_cs',
+            'iagan_began_cs',
             'iagan_vanilla_vae_cs',
     ]:
         iagan_images(args)
