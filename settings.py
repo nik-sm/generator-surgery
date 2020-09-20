@@ -56,24 +56,6 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_64]
     },
-    'beta_vae_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_128]
-    },
-    'beta_vae_inv': {
-        'InpaintingScatter': [{
-            'fraction_kept': 0.1
-        }],
-        'SuperResolution': [{
-            'scale_factor': 0.25,
-            'mode': 'bilinear',
-            'align_corners': True
-        }],
-    },
-    'beta_vae_noop': {
-        'NoOp': [{}],
-    },
     'biggan_inv': {
         'InpaintingScatter': [{
             'fraction_kept': 0.1
@@ -217,7 +199,7 @@ recovery_settings = {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1,
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [1, 2, 3],
     },
     'began_inv': {
@@ -244,7 +226,7 @@ recovery_settings = {
         'optimizer': 'lbfgs',
         'n_steps': 100,
         'z_lr': 1,
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3],
     },
     'began_untrained_cs': {
@@ -252,7 +234,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 3],
         'limit': [1],
     },
@@ -265,40 +247,13 @@ recovery_settings = {
         'n_cuts_list': [0],
         'limit': [1],
     },
-    'beta_vae_cs': {
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 1,
-        'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
-        'limit': [1],
-    },
-    'beta_vae_inv': {
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 1,
-        'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
-        'limit': [1],
-    },
-    'beta_vae_noop': {
-        'optimizer': 'lbfgs',
-        'n_steps': 40,
-        'z_lr': 1,
-        'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
-        'limit': [1],
-    },
     'biggan_inv': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
         'z_lr': 1.5,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 7],
     },
     'biggan_noop': {
@@ -307,7 +262,7 @@ recovery_settings = {
         'z_lr': 1.5,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 7],
     },
     'dcgan_cs': {
@@ -333,7 +288,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
@@ -342,7 +297,7 @@ recovery_settings = {
         'n_steps': 100,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
@@ -360,7 +315,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1],
         'limit': [1],
     },
@@ -369,7 +324,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 2],
         'limit': [1],
     },
@@ -378,7 +333,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
@@ -387,7 +342,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
@@ -396,7 +351,7 @@ recovery_settings = {
         'n_steps': 40,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 1, 2, 3, 4, 5],
         'limit': [1],
     },
@@ -405,7 +360,7 @@ recovery_settings = {
         'n_steps': 25,
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
-        'restarts': 1,
+        'restarts': 3,
         'n_cuts_list': [0, 2],
         'limit': [1],
     },
@@ -446,7 +401,7 @@ recovery_settings = {
         'z_lr1': 1e-4,
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
-        'restarts': 2,
+        'restarts': 3,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
