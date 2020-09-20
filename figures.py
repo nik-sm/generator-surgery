@@ -192,7 +192,7 @@ def create_cs_plot(split):
                         & (df_baseline['split'].isin(split_name))],
         df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing') &
                        # & (df_results['model'] == 'dcgan_cs') &
-                       (df_results['model'] == 'dcgan_cs_restarts') &
+                       (df_results['model'] == 'dcgan_restarts_cs') &
                        (df_results['n_cuts'].isin([0, 1])) &
                        (df_results['split'].isin(split_name))]
     ])
@@ -310,7 +310,6 @@ def create_cs_plot_baselines(split):
     ])
     df1['type'] = 'DCGAN'
 
-
     # began
     df2 = pd.concat([
         # iagan
@@ -327,10 +326,10 @@ def create_cs_plot_baselines(split):
                        (df_results['fm'] == 'GaussianCompressiveSensing') &
                        (df_results['n_cuts'] == 2)],
     ])
-
+    df2['type'] = 'BEGAN'
 
     # vanilla vae
-    df2 = pd.concat([
+    df3 = pd.concat([
         # iagan
         df_results.loc[(df_results['model'] == 'iagan_vanilla_vae_cs') &
                        (df_results['split'].isin(split_name))],
@@ -345,25 +344,6 @@ def create_cs_plot_baselines(split):
                        (df_results['fm'] == 'GaussianCompressiveSensing') &
                        (df_results['n_cuts'] == 2)],
     ])
-
-
-    df2 = pd.concat([
-        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
-                        & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
-                       & (df_results['model'] == 'began_cs') &
-                       (df_results['n_cuts'].isin([0, 3])) &
-                       (df_results['split'].isin(split_name))]
-    ])
-    df2['type'] = 'BEGAN'
-    df3 = pd.concat([
-        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
-                        & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
-                       & (df_results['model'].isin(['vanilla_vae_cs'])) &
-                       (df_results['n_cuts'].isin([0, 2])) &
-                       (df_results['split'].isin(split_name))]
-    ])
     df3['type'] = 'VAE'
 
     df = pd.concat([df1, df2, df3])
@@ -375,7 +355,7 @@ def create_cs_plot_baselines(split):
     sns.set_style('ticks')
     sns.set_context('poster', font_scale=1.4)
     filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
-    legend_order = ['Lasso-DCT', 'No Surgery', 'With Surgery']
+    legend_order = ['Surgery', 'IAGAN', 'MGAN']
 
     ylim = (5, 40)
     yt = range(5, 41, 5)
@@ -404,9 +384,9 @@ def create_cs_plot_baselines(split):
     labels = g._legend_data.keys()
     g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
 
-    os.makedirs('./figures/cs_plot', exist_ok=True)
-    plt.savefig((f'./figures/cs_plot/'
-                 f'cs_plot_split={split}.pdf'),
+    os.makedirs('./figures/cs_plot_baselines', exist_ok=True)
+    plt.savefig((f'./figures/cs_plot_baselines/'
+                 f'cs_plot_baselines_split={split}.pdf'),
                 dpi=300,
                 bbox_inches='tight')
 
@@ -1498,7 +1478,7 @@ if __name__ == '__main__':
     # noop_images(2)
 
     # print('CS plots...')
-    # create_cs_plot('test_celeba')
+    create_cs_plot('test_celeba')
     # create_cs_plot('ood-coco')
 
     # print('CS images...')
@@ -1518,10 +1498,10 @@ if __name__ == '__main__':
     # cs_other_init_plot('test_celeba128_cropped100', 8000)
     # cs_other_init_plot('ood-coco100', 8000)
 
-    print('Best Cuts plots...')
-    best_cuts_plot('dcgan_cs_n_cuts')
-    best_cuts_plot('began_cs_n_cuts')
-    best_cuts_plot('vanilla_vae_cs_n_cuts')
+    # print('Best Cuts plots...')
+    # best_cuts_plot('dcgan_cs_n_cuts')
+    # best_cuts_plot('began_cs_n_cuts')
+    # best_cuts_plot('vanilla_vae_cs_n_cuts')
 
     # print('Generator samples...')
     # generator_samples('dcgan')
