@@ -206,12 +206,14 @@ def parse_results_folder(root='./final_runs/results'):
                                           'rb') as f:
                                     ps = pickle.load(f)
                             else:
-                                recovered = torch.load(params_path /
-                                                       'recovered.pt')
+                                recovered = torch.load(str(params_path /
+                                                           'recovered.pt'),
+                                                       map_location='cpu')
                                 orig_path = p.parent.joinpath(
                                     'images', split, image_name, image_size,
                                     'original.pt')
-                                orig = torch.load(orig_path)
+                                orig = torch.load(str(orig_path),
+                                                  map_location='cpu')
 
                                 if recovered.dim() == 4:
                                     recovered = recovered.squeeze()
