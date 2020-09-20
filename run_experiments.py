@@ -570,7 +570,7 @@ if __name__ == '__main__':
             'biggan_noop',
             'dcgan_cs',
             'dcgan_cs_n_cuts',
-            'dcgan_cs_restarts',
+            'dcgan_restarts_cs',
             'dcgan_inv',
             'dcgan_noop',
             'dcgan_untrained_cs',

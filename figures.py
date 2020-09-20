@@ -261,6 +261,156 @@ def create_cs_plot(split):
                 bbox_inches='tight')
 
 
+def create_cs_plot_baselines(split):
+    def name_fn(row):
+        if row['model'].startswith('iagan'):
+            return 'IAGAN'
+        elif row['model'].startswith('mgan'):
+            return 'MGAN'
+        else:
+            return 'Surgery'
+
+    def ratio_fn(row):
+        if row['type'] == 'DCGAN':
+            image_size = 64
+        elif row['type'] in ['BEGAN', 'VAE']:
+            image_size = 128
+
+        return row['n_measure'] / (3 * image_size * image_size)
+
+    with open('./final_runs/processed_results/df_baseline_results.pkl',
+              'rb') as f:
+        df_baseline = pickle.load(f)
+    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
+        df_results = pickle.load(f)
+
+    if split == 'test_celeba':
+        split_name = [
+            'val_celeba64_cropped20',
+            'val_celeba128_cropped20',
+        ]
+    elif split == 'ood-coco':
+        split_name = ['val_ood-coco20']
+
+    # dcgan
+    df1 = pd.concat([
+        # iagan
+        df_results.loc[(df_results['model'] == 'iagan_dcgan_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # mgan
+        df_results.loc[(df_results['model'] == 'mgan_dcgan_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # surgery
+        df_results.loc[(df_results['model'] == 'dcgan_cs') &
+                       (df_results['split'].isin(split_name)) &
+                       (df_results['fm'] == 'GaussianCompressiveSensing') &
+                       (df_results['n_cuts'] == 1)],
+    ])
+    df1['type'] = 'DCGAN'
+
+
+    # began
+    df2 = pd.concat([
+        # iagan
+        df_results.loc[(df_results['model'] == 'iagan_began_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # mgan
+        df_results.loc[(df_results['model'] == 'mgan_began_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # surgery
+        df_results.loc[(df_results['model'] == 'began_cs') &
+                       (df_results['split'].isin(split_name)) &
+                       (df_results['fm'] == 'GaussianCompressiveSensing') &
+                       (df_results['n_cuts'] == 2)],
+    ])
+
+
+    # vanilla vae
+    df2 = pd.concat([
+        # iagan
+        df_results.loc[(df_results['model'] == 'iagan_vanilla_vae_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # mgan
+        df_results.loc[(df_results['model'] == 'mgan_vanilla_vae_cs') &
+                       (df_results['split'].isin(split_name))],
+
+        # surgery
+        df_results.loc[(df_results['model'] == 'vanilla_vae_cs') &
+                       (df_results['split'].isin(split_name)) &
+                       (df_results['fm'] == 'GaussianCompressiveSensing') &
+                       (df_results['n_cuts'] == 2)],
+    ])
+
+
+    df2 = pd.concat([
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'] == 'began_cs') &
+                       (df_results['n_cuts'].isin([0, 3])) &
+                       (df_results['split'].isin(split_name))]
+    ])
+    df2['type'] = 'BEGAN'
+    df3 = pd.concat([
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'].isin(['vanilla_vae_cs'])) &
+                       (df_results['n_cuts'].isin([0, 2])) &
+                       (df_results['split'].isin(split_name))]
+    ])
+    df3['type'] = 'VAE'
+
+    df = pd.concat([df1, df2, df3])
+
+    df['undersampling_ratio'] = df.apply(lambda row: ratio_fn(row), axis=1)
+    df['model_name'] = df.apply(lambda row: name_fn(row), axis=1)
+
+    sns.set(rc={'figure.figsize': (16, 9)})
+    sns.set_style('ticks')
+    sns.set_context('poster', font_scale=1.4)
+    filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
+    legend_order = ['Lasso-DCT', 'No Surgery', 'With Surgery']
+
+    ylim = (5, 40)
+    yt = range(5, 41, 5)
+
+    plt.figure()
+
+    g = sns.FacetGrid(df,
+                      col="type",
+                      hue='model_name',
+                      hue_order=legend_order,
+                      hue_kws=dict(marker=filled_markers),
+                      height=8,
+                      aspect=1.3,
+                      legend_out=True,
+                      xlim=(0, 0.5),
+                      ylim=ylim)
+    g = (g.map(sns.lineplot, "undersampling_ratio", "psnr", ci='sd'))
+
+    (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
+        "PSNR (dB)").set_titles("{col_name}",
+                                size=36).fig.subplots_adjust(bottom=0.3))
+
+    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
+
+    handles = g._legend_data.values()
+    labels = g._legend_data.keys()
+    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
+
+    os.makedirs('./figures/cs_plot', exist_ok=True)
+    plt.savefig((f'./figures/cs_plot/'
+                 f'cs_plot_split={split}.pdf'),
+                dpi=300,
+                bbox_inches='tight')
+
+
 def noop_plot():
 
     with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:

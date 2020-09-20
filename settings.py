@@ -1,9 +1,6 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128 = [
-    400, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 
-    # 24000
-]
+n_measure_128 = [400, 600, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
 
 forward_models = {
     'began_cs': {
@@ -50,6 +47,11 @@ forward_models = {
         }, {
             'n_measure': 8000
         }]
+    },
+    'dcgan_restarts_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
     },
     'beta_vae_cs': {
         'GaussianCompressiveSensing': [{
@@ -162,6 +164,16 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_128]
     },
+    'iagan_dcgan_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
+    'iagan_vanilla_vae_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
 }
 
 baseline_settings = {
@@ -197,17 +209,12 @@ recovery_settings = {
         'limit': [1],
     },
     'began_cs_other_init': {
-        'z_init_mode':
-        ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
+        'z_init_mode': ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
         'limit': [1, 1, 5, 10, None],
-        'optimizer':
-        'lbfgs',
-        'n_steps':
-        25,
-        'z_lr':
-        1,
-        'restarts':
-        1,
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'restarts': 1,
         'n_cuts_list': [1, 2, 3],
     },
     'began_inv': {
@@ -336,6 +343,15 @@ recovery_settings = {
         'n_cuts_list': [0, 1, 2, 3, 4],
         'limit': [1],
     },
+    'dcgan_restarts_cs': {
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 0.1,
+        'z_init_mode': ['clamped_normal'],
+        'restarts': 3,
+        'n_cuts_list': [0, 1],
+        'limit': [1],
+    },
     'dcgan_untrained_cs': {
         'optimizer': 'lbfgs',
         'n_steps': 25,
@@ -428,6 +444,26 @@ recovery_settings = {
         'z_lr2': 1e-5,
         'model_lr': 1e-5,
         'restarts': 2,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+    },
+    'iagan_dcgan_cs': {
+        'optimizer': 'adam',
+        'z_steps1': 1600,
+        'z_steps2': 600,
+        'z_lr1': 1e-4,
+        'z_lr2': 1e-5,
+        'model_lr': 1e-5,
+        'z_init_mode': ['clamped_normal'],
+        'limit': [1],
+    },
+    'iagan_vanilla_vae_cs': {
+        'optimizer': 'adam',
+        'z_steps1': 1600,
+        'z_steps2': 600,
+        'z_lr1': 1e-4,
+        'z_lr2': 1e-5,
+        'model_lr': 1e-5,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
     },
