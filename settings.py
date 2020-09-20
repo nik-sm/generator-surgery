@@ -1,6 +1,17 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128 = [400, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
+n_measure_128 = [
+    400,
+    800,
+    1200,
+    1600,
+    2400,
+    4000,
+    8000,
+    12000,
+    16000,
+    # 24000
+]
 
 forward_models = {
     'began_cs': {
@@ -129,12 +140,12 @@ forward_models = {
     'mgan_began_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_128[:-1]]
+        } for x in n_measure_128]
     },
     'mgan_vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
             'n_measure': x
-        } for x in n_measure_128[:-1]]
+        } for x in n_measure_128]
     },
     'mgan_dcgan_cs': {
         'GaussianCompressiveSensing': [{
