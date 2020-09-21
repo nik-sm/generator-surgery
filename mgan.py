@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm, trange
 
-from forward_model import GaussianCompressiveSensing, NoOp
+from forward_model import GaussianCompressiveSensing
 from model.began import Generator128
 from utils import (get_z_vector, load_target_image, load_trained_net,
                    psnr_from_mse)
@@ -18,19 +18,19 @@ warnings.filterwarnings("ignore")
 
 
 def _mgan_recover(x,
-                 gen,
-                 n_cuts,
-                 forward_model,
-                 optimizer_type='sgd',
-                 mode='zero',
-                 limit=1,
-                 z_lr=1,
-                 n_steps=2000,
-                 z_number=20,
-                 run_dir=None,
-                 run_name=None,
-                 disable_tqdm=False,
-                 **kwargs):
+                  gen,
+                  n_cuts,
+                  forward_model,
+                  optimizer_type='sgd',
+                  mode='zero',
+                  limit=1,
+                  z_lr=1,
+                  n_steps=2000,
+                  z_number=20,
+                  run_dir=None,
+                  run_name=None,
+                  disable_tqdm=False,
+                  **kwargs):
     """
     Args:
         x - input image, torch tensor (C x H x W)
@@ -48,24 +48,14 @@ def _mgan_recover(x,
         n_pixel_bora = 64 * 64 * 3
         n_pixel = np.prod(x.shape)
         noise = torch.randn(1, forward_model.n_measure, device=x.device)
-        noise *= 0.1 * torch.sqrt(
-            torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
+        noise *= 0.1 * torch.sqrt(torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
 
-    z1 = torch.nn.Parameter(
-        get_z_vector((z_number, *z1_dim),
-                     mode=mode,
-                     limit=limit,
-                     device=x.device))
+    z1 = torch.nn.Parameter(get_z_vector((z_number, *z1_dim), mode=mode, limit=limit, device=x.device))
     alpha = torch.nn.Parameter(
-        get_z_vector((z_number, gen.input_shapes[n_cuts][0][0]),
-                     mode=mode,
-                     limit=limit,
-                     device=x.device))
+        get_z_vector((z_number, gen.input_shapes[n_cuts][0][0]), mode=mode, limit=limit, device=x.device))
     params = [z1, alpha]
     if len(z2_dim) > 0:
-        z2 = torch.nn.Parameter(
-            get_z_vector((1, *z2_dim), mode=mode, limit=limit,
-                         device=x.device))
+        z2 = torch.nn.Parameter(get_z_vector((1, *z2_dim), mode=mode, limit=limit, device=x.device))
         params.append(z2)
     else:
         z2 = None
@@ -94,9 +84,7 @@ def _mgan_recover(x,
     if run_name is not None:
         writer.add_image("Original/Clamp", x.clamp(0, 1))
         if forward_model.viewable:
-            writer.add_image(
-                "Distorted/Clamp",
-                forward_model(x.unsqueeze(0).clamp(0, 1)).squeeze(0))
+            writer.add_image("Distorted/Clamp", forward_model(x.unsqueeze(0).clamp(0, 1)).squeeze(0))
 
     # Recover image under forward model
     x = x.expand(1, *x.shape)
@@ -104,10 +92,7 @@ def _mgan_recover(x,
     if (isinstance(forward_model, GaussianCompressiveSensing)):
         y_observed += noise
 
-    for j in trange(n_steps,
-                    leave=False,
-                    desc='Recovery',
-                    disable=disable_tqdm):
+    for j in trange(n_steps, leave=False, desc='Recovery', disable=disable_tqdm):
 
         optimizer_z.zero_grad()
         F_l = gen.forward(z1, None, n_cuts=0, end=n_cuts, **kwargs)
@@ -119,8 +104,7 @@ def _mgan_recover(x,
         train_mse.backward()
         optimizer_z.step()
 
-        train_mse_clamped = F.mse_loss(
-            forward_model(x_hats.detach().clamp(0, 1)), y_observed)
+        train_mse_clamped = F.mse_loss(forward_model(x_hats.detach().clamp(0, 1)), y_observed)
         orig_mse_clamped = F.mse_loss(x_hats.detach().clamp(0, 1), x)
 
         if run_name is not None and j == 0:
@@ -129,12 +113,10 @@ def _mgan_recover(x,
         if run_name is not None:
             writer.add_scalar('TRAIN_MSE', train_mse_clamped, j + 1)
             writer.add_scalar('ORIG_MSE', orig_mse_clamped, j + 1)
-            writer.add_scalar('ORIG_PSNR', psnr_from_mse(orig_mse_clamped),
-                              j + 1)
+            writer.add_scalar('ORIG_PSNR', psnr_from_mse(orig_mse_clamped), j + 1)
 
             if j % save_img_every_n == 0:
-                writer.add_image('Recovered',
-                                 x_hats.clamp(0, 1).squeeze(0), j + 1)
+                writer.add_image('Recovered', x_hats.clamp(0, 1).squeeze(0), j + 1)
 
         if scheduler_z is not None:
             scheduler_z.step()
@@ -143,6 +125,7 @@ def _mgan_recover(x,
         writer.add_image('Final', x_hats.clamp(0, 1).squeeze(0))
 
     return x_hats.squeeze(0), forward_model(x)[0], train_mse_clamped
+
 
 def mgan_recover(x,
                  gen,
@@ -163,34 +146,32 @@ def mgan_recover(x,
     best_psnr = -float("inf")
     best_return_val = None
 
-    for i in trange(restarts,
-                    desc='Restarts',
-                    leave=False,
-                    disable=disable_tqdm):
+    for i in trange(restarts, desc='Restarts', leave=False, disable=disable_tqdm):
         if run_name is not None:
             current_run_name = f'{run_name}_{i}'
         else:
             current_run_name = None
         return_val = _mgan_recover(x=x,
-                              gen=gen,
-                              n_cuts=n_cuts,
-                              forward_model=forward_model,
-                              optimizer_type=optimizer_type,
-                              mode=mode,
-                              limit=limit,
-                              z_lr=z_lr,
-                              n_steps=n_steps,
+                                   gen=gen,
+                                   n_cuts=n_cuts,
+                                   forward_model=forward_model,
+                                   optimizer_type=optimizer_type,
+                                   mode=mode,
+                                   limit=limit,
+                                   z_lr=z_lr,
+                                   n_steps=n_steps,
                                    z_number=z_number,
-                              run_dir=run_dir,
-                              run_name=current_run_name,
-                              disable_tqdm=disable_tqdm,
-                              **kwargs)
+                                   run_dir=run_dir,
+                                   run_name=current_run_name,
+                                   disable_tqdm=disable_tqdm,
+                                   **kwargs)
         p = psnr_from_mse(return_val[2])
         if p > best_psnr:
             best_psnr = p
             best_return_val = return_val
 
     return best_return_val
+
 
 if __name__ == '__main__':
     DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -202,28 +183,22 @@ if __name__ == '__main__':
     args = a.parse_args()
 
     gen = Generator128(64)
-    gen = load_trained_net(
-        gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
-              '.n_cuts=0/gen_ckpt.49.pt'))
+    gen = load_trained_net(gen, ('./checkpoints/celeba_began.withskips.bs32.cosine.min=0.25'
+                                 '.n_cuts=0/gen_ckpt.49.pt'))
     gen = gen.eval().to(DEVICE)
 
     img_size = 128
     img_shape = (3, img_size, img_size)
 
-    forward_model = GaussianCompressiveSensing(n_measure=20000,
-                                               img_shape=img_shape)
+    forward_model = GaussianCompressiveSensing(n_measure=20000, img_shape=img_shape)
     # forward_model = NoOp()
 
-    for img_name in tqdm(os.listdir(args.img_dir),
-                         desc='Images',
-                         leave=True,
-                         disable=args.disable_tqdm):
-        orig_img = load_target_image(os.path.join(args.img_dir, img_name),
-                                     img_size).to(DEVICE)
+    for img_name in tqdm(os.listdir(args.img_dir), desc='Images', leave=True, disable=args.disable_tqdm):
+        orig_img = load_target_image(os.path.join(args.img_dir, img_name), img_size).to(DEVICE)
         img_basename, _ = os.path.splitext(img_name)
-        x_hat, x_degraded = mgan_recover(orig_img,
-                                         gen,
-                                         n_cuts=args.n_cuts,
-                                         forward_model=forward_model,
-                                         run_dir='mgan_prior',
-                                         run_name=img_basename)
+        x_hat, x_degraded, _ = mgan_recover(orig_img,
+                                            gen,
+                                            n_cuts=args.n_cuts,
+                                            forward_model=forward_model,
+                                            run_dir='mgan_prior',
+                                            run_name=img_basename)

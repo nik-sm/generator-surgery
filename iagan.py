@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
         for n_measure in tqdm(n_measures, desc='N_measures', leave=False):
             img_shape = (3, img_size, img_size)
-            forward_model = GaussianCompressiveSensing(n_measure=625,
+            forward_model = GaussianCompressiveSensing(n_measure=n_measure,
                                                        img_shape=img_shape)
             # forward_model = NoOp()
 
@@ -279,7 +279,7 @@ if __name__ == '__main__':
                 orig_img = load_target_image(
                     os.path.join(args.img_dir, img_name), img_size).to(DEVICE)
                 img_basename, _ = os.path.splitext(img_name)
-                x_hat, x_degraded = iagan_recover(
+                x_hat, x_degraded, _ = iagan_recover(
                     orig_img,
                     gen,
                     forward_model,
