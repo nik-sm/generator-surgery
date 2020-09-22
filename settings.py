@@ -1,17 +1,6 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
-n_measure_128 = [
-    # 400,
-    # 800,
-    # 1200,
-    # 1600,
-    # 2400,
-    # 4000,
-    # 8000,
-    # 12000,
-    # 16000,
-    24000
-]
+n_measure_128 = [400, 800, 1200, 1600, 2400, 4000, 8000, 12000, 16000, 24000]
 
 forward_models = {
     'began_cs': {
@@ -58,11 +47,6 @@ forward_models = {
         }, {
             'n_measure': 8000
         }]
-    },
-    'dcgan_restarts_cs': {
-        'GaussianCompressiveSensing': [{
-            'n_measure': x
-        } for x in n_measure_64]
     },
     'biggan_inv': {
         'InpaintingScatter': [{
@@ -212,13 +196,18 @@ recovery_settings = {
         'limit': [1],
     },
     'began_cs_other_init': {
-        'z_init_mode': ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
+        'z_init_mode':
+        ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
         'limit': [1, 1, 5, 10, None],
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 1,
-        'restarts': 3,
-        'n_cuts_list': [1, 2, 3],
+        'optimizer':
+        'lbfgs',
+        'n_steps':
+        25,
+        'z_lr':
+        1,
+        'restarts':
+        3,
+        'n_cuts_list': [2],
     },
     'began_inv': {
         'optimizer': 'lbfgs',
@@ -245,7 +234,7 @@ recovery_settings = {
         'n_steps': 100,
         'z_lr': 1,
         'restarts': 3,
-        'n_cuts_list': [0, 1, 2, 3],
+        'n_cuts_list': [0, 2],
     },
     'began_untrained_cs': {
         'optimizer': 'lbfgs',
@@ -253,7 +242,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 3],
+        'n_cuts_list': [2],
         'limit': [1],
     },
     'began_restarts_cs': {
@@ -307,22 +296,13 @@ recovery_settings = {
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 1, 2, 3, 4],
+        'n_cuts_list': [0, 1],
         'limit': [1],
     },
     'dcgan_noop': {
         'optimizer': 'lbfgs',
         'n_steps': 100,
         'z_lr': 1,
-        'z_init_mode': ['clamped_normal'],
-        'restarts': 3,
-        'n_cuts_list': [0, 1, 2, 3, 4],
-        'limit': [1],
-    },
-    'dcgan_restarts_cs': {
-        'optimizer': 'lbfgs',
-        'n_steps': 25,
-        'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
         'n_cuts_list': [0, 1],
@@ -334,7 +314,7 @@ recovery_settings = {
         'z_lr': 0.1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 1],
+        'n_cuts_list': [1],
         'limit': [1],
     },
     'vanilla_vae_cs': {
@@ -343,7 +323,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 2],
+        'n_cuts_list': [0, 1],
         'limit': [1],
     },
     'vanilla_vae_cs_n_cuts': {
@@ -361,7 +341,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'n_cuts_list': [0, 1],
         'limit': [1],
     },
     'vanilla_vae_noop': {
@@ -370,7 +350,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 1, 2, 3, 4, 5],
+        'n_cuts_list': [0, 1],
         'limit': [1],
     },
     'vanilla_vae_untrained_cs': {
@@ -379,7 +359,7 @@ recovery_settings = {
         'z_lr': 1,
         'z_init_mode': ['clamped_normal'],
         'restarts': 3,
-        'n_cuts_list': [0, 2],
+        'n_cuts_list': [1],
         'limit': [1],
     },
     'mgan_dcgan_cs': {

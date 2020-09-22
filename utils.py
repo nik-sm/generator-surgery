@@ -168,12 +168,12 @@ def parse_results_folder(root='./final_runs/results'):
             'vanilla_vae': '128',
             'beta_vae': '128',
             'biggan': '512',
-            'iagan_began': '128',
-            'iagan_vae': '128',
             'iagan_dcgan': '64',
+            'iagan_began': '128',
+            'iagan_vanilla_vae': '128',
+            'mgan_dcgan': '64',
             'mgan_began': '128',
             'mgan_vanilla_vae': '128',
-            'mgan_dcgan': '64',
         }
         for k, v in d.items():
             if model_name.startswith(k):
@@ -182,6 +182,7 @@ def parse_results_folder(root='./final_runs/results'):
 
     for model_path in p.iterdir():
         model = model_path.name
+
         image_size = get_img_size(model)
         for n_cuts_path in model_path.iterdir():
             n_cuts = int(n_cuts_path.name.split('=')[1])
