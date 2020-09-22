@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 def _deep_decoder_recover(
     x,
     forward_model,
-    optimizer_type,
+    optimizer,
     num_filters,
     depth,
     lr,
@@ -45,10 +45,10 @@ def _deep_decoder_recover(
     # make a fresh DD model for every run
     model = DeepDecoder(num_filters=num_filters, img_size=img_size, depth=depth).to(x.device)
 
-    if optimizer_type == 'adam':
+    if optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         save_img_every_n = 50
-    elif optimizer_type == 'lbfgs':
+    elif optimizer == 'lbfgs':
         optimizer = torch.optim.LBFGS(model.parameters(), lr=lr)
         save_img_every_n = 2
     else:
@@ -106,7 +106,7 @@ def _deep_decoder_recover(
 def deep_decoder_recover(
         x,
         forward_model,
-        optimizer_type='lbfgs',
+        optimizer='lbfgs',
         num_filters=64,
         depth=6,  # TODO
         lr=1,
@@ -128,7 +128,7 @@ def deep_decoder_recover(
             current_run_name = None
         return_val = _deep_decoder_recover(x=x,
                                            forward_model=forward_model,
-                                           optimizer_type=optimizer_type,
+                                           optimizer=optimizer,
                                            num_filters=num_filters,
                                            depth=depth,
                                            lr=lr,
@@ -155,9 +155,9 @@ if __name__ == '__main__':
     a.add_argument('--run_name_suffix', default='')
     args = a.parse_args()
 
-    params_64 = {'depth': 5, 'num_filters': 250, 'lr': 1e-2, 'steps': 5000, 'restarts': 1, 'optimizer_type': 'adam'}
+    params_64 = {'depth': 5, 'num_filters': 250, 'lr': 1e-2, 'steps': 5000, 'restarts': 1, 'optimizer': 'adam'}
 
-    params_128 = {'depth': 6, 'num_filters': 700, 'lr': 1e-2, 'steps': 5000, 'restarts': 1, 'optimizer_type': 'adam'}
+    params_128 = {'depth': 6, 'num_filters': 700, 'lr': 1e-2, 'steps': 5000, 'restarts': 1, 'optimizer': 'adam'}
 
     for img_size, n_measures, params in tqdm([(64, [600, 2000], params_64), (128, [2400, 8000], params_128)],
                                              desc='ImgSizes',

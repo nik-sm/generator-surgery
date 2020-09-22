@@ -525,7 +525,7 @@ def deep_decoder_images(args):
 
                 recovered_img, distorted_img, _ = deep_decoder_recover(orig_img,
                                                                        forward_model=forward_model,
-                                                                       optimizer_type=metadata['optimizer_type'],
+                                                                       optimizer=metadata['optimizer'],
                                                                        num_filters=metadata['num_filters'],
                                                                        depth=metadata['depth'],
                                                                        lr=metadata['lr'],
@@ -617,9 +617,9 @@ if __name__ == '__main__':
     ]:
         mgan_images(args)
     elif args.model in [
-            'deep_decoder_64',
-            'deep_decoder_128',
+            'deep_decoder_64_cs',
+            'deep_decoder_128_cs',
     ]:
-        pass
+        deep_decoder_images(args)
     else:
         raise NotImplementedError()

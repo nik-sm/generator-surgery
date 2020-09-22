@@ -1,16 +1,16 @@
 """Experiment Settings"""
 n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
 n_measure_128 = [
-    400,
-    800,
-    1200,
-    1600,
-    2400,
-    4000,
-    8000,
-    12000,
-    16000,
-    # 24000
+    # 400,
+    # 800,
+    # 1200,
+    # 1600,
+    # 2400,
+    # 4000,
+    # 8000,
+    # 12000,
+    # 16000,
+    24000
 ]
 
 forward_models = {
@@ -167,6 +167,16 @@ forward_models = {
             'n_measure': x
         } for x in n_measure_128]
     },
+    'deep_decoder_64_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_64]
+    },
+    'deep_decoder_128_cs': {
+        'GaussianCompressiveSensing': [{
+            'n_measure': x
+        } for x in n_measure_128]
+    },
 }
 
 baseline_settings = {
@@ -202,17 +212,12 @@ recovery_settings = {
         'limit': [1],
     },
     'began_cs_other_init': {
-        'z_init_mode':
-        ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
+        'z_init_mode': ['lasso_inverse', 'clamped_normal', 'normal', 'normal', 'zero'],
         'limit': [1, 1, 5, 10, None],
-        'optimizer':
-        'lbfgs',
-        'n_steps':
-        25,
-        'z_lr':
-        1,
-        'restarts':
-        3,
+        'optimizer': 'lbfgs',
+        'n_steps': 25,
+        'z_lr': 1,
+        'restarts': 3,
         'n_cuts_list': [1, 2, 3],
     },
     'began_inv': {
@@ -439,5 +444,23 @@ recovery_settings = {
         'restarts': 3,
         'z_init_mode': ['clamped_normal'],
         'limit': [1],
+    },
+    'deep_decoder_64_cs': {
+        'optimizer': 'adam',
+        'steps': 5000,
+        'lr': 1e-2,
+        'restarts': 3,
+        'depth': 5,
+        'num_filters': 250,
+        'img_size': 64,
+    },
+    'deep_decoder_128_cs': {
+        'optimizer': 'adam',
+        'steps': 5000,
+        'lr': 1e-2,
+        'restarts': 3,
+        'depth': 6,
+        'num_filters': 700,
+        'img_size': 128,
     },
 }
