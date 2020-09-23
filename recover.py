@@ -18,6 +18,8 @@ from utils import (get_z_vector, load_target_image, load_trained_net, psnr,
 
 warnings.filterwarnings("ignore")
 
+DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
 
 def _recover(x,
              gen,
@@ -65,19 +67,18 @@ def _recover(x,
                                   A=forward_model.A.cpu().numpy(),
                                   noise=noise.cpu().numpy())
 
-        _, _, _, z1_z2_dict = recover(torch.tensor(lasso_x_hat.transpose(
-            [2, 0, 1]),
-                                                dtype=torch.float).to(DEVICE),
-                                   gen,
-                                   optimizer_type=optimizer_type,
-                                   n_cuts=n_cuts,
-                                   forward_model=forward_model,
-                                   mode='clamped_normal',
-                                   limit=limit,
-                                   z_lr=z_lr,
-                                   n_steps=n_steps,
-                                   batch_size=1,
-                                   return_z1_z2=True)
+        _, _, _, z1_z2_dict = recover(torch.tensor(
+            lasso_x_hat.transpose([2, 0, 1]), dtype=torch.float).to(DEVICE),
+                                      gen,
+                                      optimizer_type=optimizer_type,
+                                      n_cuts=n_cuts,
+                                      forward_model=forward_model,
+                                      mode='clamped_normal',
+                                      limit=limit,
+                                      z_lr=z_lr,
+                                      n_steps=n_steps,
+                                      batch_size=1,
+                                      return_z1_z2=True)
         z1 = torch.nn.Parameter(z1_z2_dict['z1'])
         params = [z1]
         if len(z2_dim) > 0:
@@ -182,10 +183,9 @@ def _recover(x,
                                        reduction='none').view(batch_size,
                                                               -1).mean(1)
 
-
         # batch_size = 1, so best and worst are meaningless.
         # Restarts is handled in outer function
-        best_train_mse, best_idx  = train_mses_clamped.min(0)
+        best_train_mse, best_idx = train_mses_clamped.min(0)
         worst_train_mse, worst_idx = train_mses_clamped.max(0)
         best_orig_mse = orig_mses_clamped[best_idx]
         worst_orig_mse = orig_mses_clamped[worst_idx]
@@ -215,9 +215,12 @@ def _recover(x,
         writer.add_image('Final', x_hats[best_idx].clamp(0, 1))
 
     if return_z1_z2:
-        return x_hats[best_idx], forward_model(x)[0], best_train_mse, {'z1': z1, 'z2': z2}
+        return x_hats[best_idx], forward_model(x)[0], best_train_mse, {
+            'z1': z1,
+            'z2': z2
+        }
     else:
-        return x_hats[best_idx], forward_model(x)[0], best_train_mse 
+        return x_hats[best_idx], forward_model(x)[0], best_train_mse
 
 
 def recover(x,
@@ -365,11 +368,11 @@ if __name__ == '__main__':
                                      img_size).to(DEVICE)
         img_basename, _ = os.path.splitext(img_name)
         x_hat, x_degraded, _ = recover(orig_img,
-                                    gen,
-                                    optimizer_type='lbfgs',
-                                    n_cuts=n_cuts,
-                                    forward_model=forward_model,
-                                    z_lr=1.0,
-                                    n_steps=25,
-                                    run_dir='ours',
-                                    run_name=img_basename)
+                                       gen,
+                                       optimizer_type='lbfgs',
+                                       n_cuts=n_cuts,
+                                       forward_model=forward_model,
+                                       z_lr=1.0,
+                                       n_steps=25,
+                                       run_dir='ours',
+                                       run_name=img_basename)
