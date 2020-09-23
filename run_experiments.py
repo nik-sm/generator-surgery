@@ -487,7 +487,7 @@ def deep_decoder_images(args):
 
     os.makedirs(BASE_DIR, exist_ok=True)
 
-    metadata = baseline_settings[args.model]
+    metadata = recovery_settings[args.model]
     forwards = forward_models[args.model]
 
     data_split = Path(args.img_dir).name
