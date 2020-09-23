@@ -77,7 +77,7 @@ def _recover(x,
                                       limit=limit,
                                       z_lr=z_lr,
                                       n_steps=n_steps,
-                                      batch_size=1,
+                                      restarts=1,
                                       return_z1_z2=True)
         z1 = torch.nn.Parameter(z1_z2_dict['z1'])
         params = [z1]
