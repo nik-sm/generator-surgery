@@ -1,16 +1,21 @@
 """Experiment Settings"""
-n_measure_64 = [100, 200, 300, 400, 600, 1000, 2000, 3000, 4000, 6000]
+n_measure_64 = [
+    100,
+    200,
+    300,
+    400,
+    600,
+    1000,
+    2000,
+    # 3000, 4000, 6000
+]
 n_measure_128 = [
     400,
     800,
     1200,
     1600,
     2400,
-    4000,
-    8000,
-    12000,
-    16000,
-    # 24000
+    # 4000, 8000, 12000, 16000, 24000
 ]
 
 forward_models = {
@@ -52,10 +57,8 @@ forward_models = {
     },
     'began_restarts_cs': {
         'GaussianCompressiveSensing': [{
-            'n_measure': 2400
-        }, {
-            'n_measure': 8000
-        }]
+            'n_measure': x
+        } for x in n_measure_128]
     },
     'biggan_inv': {
         'InpaintingScatter': [{
