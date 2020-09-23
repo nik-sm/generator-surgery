@@ -36,10 +36,8 @@ forward_models = {
     },
     'began_untrained_cs': {
         'GaussianCompressiveSensing': [{
-            'n_measure': 2400
-        }, {
-            'n_measure': 8000
-        }]
+            'n_measure': x
+        } for x in n_measure_128]
     },
     'began_restarts_cs': {
         'GaussianCompressiveSensing': [{
@@ -86,10 +84,8 @@ forward_models = {
     },
     'dcgan_untrained_cs': {
         'GaussianCompressiveSensing': [{
-            'n_measure': 600
-        }, {
-            'n_measure': 2000
-        }]
+            'n_measure': x
+        } for x in n_measure_64]
     },
     'vanilla_vae_cs': {
         'GaussianCompressiveSensing': [{
@@ -116,10 +112,8 @@ forward_models = {
     },
     'vanilla_vae_untrained_cs': {
         'GaussianCompressiveSensing': [{
-            'n_measure': 2400
-        }, {
-            'n_measure': 8000
-        }]
+            'n_measure': x
+        } for x in n_measure_128]
     },
     'mgan_began_cs': {
         'GaussianCompressiveSensing': [{
