@@ -43,7 +43,12 @@ def _deep_decoder_recover(
             torch.tensor(n_pixel / forward_model.n_measure / n_pixel_bora))
 
     # z is a fixed latent vector
-    z = torch.randn(batch_size, num_filters, 4, 4, device=x.device)
+    start_imsize = int(np.log2(img_size)) - depth + 1
+    z = torch.randn(batch_size,
+                    num_filters,
+                    start_imsize,
+                    start_imsize,
+                    device=x.device)
 
     # make a fresh DD model for every run
     model = DeepDecoder(num_filters=num_filters,

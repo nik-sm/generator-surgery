@@ -67,19 +67,3 @@ class DeepDecoder(nn.Module):
                 "Must specify either sigmoid or none as output activation type."
             )
         return out
-
-
-if __name__ == "__main__":
-    dd64 = DeepDecoder(44, 64, 5)
-    dd128 = DeepDecoder(100, 128, 6)
-
-    def count_parameters(model):
-        return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-    num_params64 = count_parameters(dd64)
-    num_params128 = count_parameters(dd128)
-
-    z64 = torch.randn(1, 44, 2, 2)
-    z128 = torch.randn(1, 100, 4, 4)
-    out64 = dd64(z64)
-    out128 = dd128(z128)

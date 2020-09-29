@@ -423,7 +423,7 @@ recovery_settings = {
         'lr': 1e-2,
         'restarts': 3,
         'depth': 5,
-        'num_filters': 250,
+        'num_filters': 44,
         'img_size': 64,
     },
     'deep_decoder_128_cs': {
@@ -432,7 +432,7 @@ recovery_settings = {
         'lr': 1e-2,
         'restarts': 3,
         'depth': 6,
-        'num_filters': 700,
+        'num_filters': 89,
         'img_size': 128,
     },
 }
