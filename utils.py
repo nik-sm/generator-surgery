@@ -174,6 +174,8 @@ def parse_results_folder(root='./final_runs/results'):
             'mgan_dcgan': '64',
             'mgan_began': '128',
             'mgan_vanilla_vae': '128',
+            'deep_decoder_64': '64',
+            'deep_decoder_128': '128',
         }
         for k, v in d.items():
             if model_name.startswith(k):

@@ -19,15 +19,229 @@ from utils import (load_trained_net, parse_baseline_results_folder,
 orig_biggan_forward = orig_biggan.forward
 
 
+def cs_plot(split):
+    def name_fn(row):
+        if row['model'].startswith('lasso-dct'):
+            return 'Lasso-DCT'
+        elif row['n_cuts'] == 0:
+            return 'No Surgery'
+        else:
+            return 'With Surgery'
+
+    def ratio_fn(row):
+        if row['type'] == 'DCGAN':
+            image_size = 64
+        elif row['type'] in ['BEGAN', 'VAE']:
+            image_size = 128
+
+        return row['n_measure'] / (3 * image_size * image_size)
+
+    with open('./final_runs/processed_results/df_baseline_results.pkl',
+              'rb') as f:
+        df_baseline = pickle.load(f)
+    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
+        df_results = pickle.load(f)
+
+    if split == 'test_celeba':
+        split_name = [
+            'test_celeba64_cropped100',
+            # 'test_celeba64_cropped20',
+            'test_celeba128_cropped100',
+        ]
+    elif split == 'ood-coco':
+        split_name = ['ood-coco100']
+
+    df1 = pd.concat([
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-64')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing') &
+                       # & (df_results['model'] == 'dcgan_cs') &
+                       (df_results['model'] == 'dcgan_cs') &
+                       (df_results['n_cuts'].isin([0, 1])) &
+                       (df_results['split'].isin(split_name))]
+    ])
+    df1.loc[:, 'type'] = 'DCGAN'
+    df2 = pd.concat([
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'] == 'began_cs') &
+                       (df_results['n_cuts'].isin([0, 2])) &
+                       (df_results['split'].isin(split_name))]
+    ])
+    df2.loc[:, 'type'] = 'BEGAN'
+    df3 = pd.concat([
+        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
+                        & (df_baseline['split'].isin(split_name))],
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'].isin(['vanilla_vae_cs'])) &
+                       (df_results['n_cuts'].isin([0, 1])) &
+                       (df_results['split'].isin(split_name))]
+    ])
+    df3.loc[:, 'type'] = 'VAE'
+
+    df = pd.concat([df1, df2, df3])
+
+    df['undersampling_ratio'] = df.apply(lambda row: ratio_fn(row), axis=1)
+    df['model_name'] = df.apply(lambda row: name_fn(row), axis=1)
+
+    sns.set(rc={'figure.figsize': (16, 9)})
+    sns.set_style('ticks')
+    sns.set_context('poster', font_scale=1.6)
+    filled_markers = ['D', 'o', 'v', 'd', '^', '*', 'X']
+    legend_order = ['With Surgery', 'No Surgery', 'Lasso-DCT']
+
+    if split == 'test_celeba':
+        ylim = (10, 40)
+        yt = range(10, 41, 5)
+    elif split == 'ood-coco':
+        ylim = (10, 35)
+        yt = range(10, 36, 5)
+
+    plt.figure()
+
+    g = sns.FacetGrid(df,
+                      col="type",
+                      hue='model_name',
+                      hue_order=legend_order,
+                      hue_kws=dict(marker=filled_markers),
+                      height=12,
+                      sharey=False,
+                      aspect=1.3,
+                      legend_out=True,
+                      xlim=(0, 0.5),
+                      ylim=ylim
+                     )
+    g = (g.map(sns.lineplot, "undersampling_ratio", "psnr", ci='sd', markersize=20))
+
+    (g.set_xlabels(r"Undersampling Ratio ($m/n$)").set_ylabels(
+        "PSNR (dB)").set_titles("{col_name}",
+                                size=36).fig.subplots_adjust(bottom=0.25))
+
+    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
+
+    handles = g._legend_data.values()
+    labels = g._legend_data.keys()
+    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
+
+    os.makedirs('./figures/cs_plot', exist_ok=True)
+    plt.savefig((f'./figures/cs_plot/'
+                 f'cs_plot_split={split}.pdf'),
+                dpi=300,
+                bbox_inches='tight')
+
+
+def cs_baselines_plot(split):
+    def _name_fn(row):
+        if row['model'].startswith('mgan'):
+            return 'MGAN'
+        elif row['model'].startswith('iagan'):
+            return 'IAGAN'
+        elif row['model'].startswith('deep_decoder'):
+            return 'DD'
+        else:
+            return 'With Surgery'
+
+    def _ratio_fn(row):
+        if row['type'] == 'DCGAN':
+            image_size = 64
+        elif row['type'] in ['BEGAN', 'VAE']:
+            image_size =128
+
+        return row['n_measure'] / (3 * image_size * image_size)
+
+    with open('./final_runs/processed_results/df_baseline_results.pkl',
+              'rb') as f:
+        df_baseline = pickle.load(f)
+    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
+        df_results = pickle.load(f)
+
+    if split == 'test_celeba':
+        splits = ['test_celeba64_cropped100', 'test_celeba128_cropped100']
+    elif split == 'ood-coco':
+        splits = ['ood-coco100']
+
+    df1 = df_results.loc[((df_results['model'] == 'dcgan_cs') & (df_results['n_cuts'] == 1)) |
+                 (df_results['model'] == 'mgan_dcgan_cs') |
+                 (df_results['model'] == 'iagan_dcgan_cs') |
+                 (df_results['model'] == 'deep_decoder_64_cs')].copy()
+    df1['type'] = 'DCGAN'
+
+    df2 = df_results.loc[((df_results['model'] == 'began_cs') & (df_results['n_cuts'] == 2)) |
+                (df_results['model'] == 'mgan_began_cs') |
+                 (df_results['model'] == 'iagan_began_cs') |
+                 (df_results['model'] == 'deep_decoder_128_cs')].copy()
+    df2['type'] = 'BEGAN'
+
+
+    df3 = df_results.loc[((df_results['model'] == 'vanilla_vae_cs') & (df_results['n_cuts'] == 1)) |
+                (df_results['model'] == 'mgan_vanilla_vae_cs') |
+                 (df_results['model'] == 'iagan_vanilla_vae_cs') |
+                 (df_results['model'] == 'deep_decoder_128_cs')].copy()
+    df3['type'] = 'VAE'
+
+    df = pd.concat([df1, df2, df3])
+    df = df[df['split'].isin(splits)]
+
+    df['model_name'] = df.apply(lambda row: _name_fn(row), axis=1)
+    df['undersampling_ratio'] = df.apply(lambda row: _ratio_fn(row), axis=1)
+
+    sns.set(rc={'figure.figsize': (16, 9)})
+    sns.set_style('ticks')
+    sns.set_context('poster', font_scale=1.6)
+    filled_markers = ['D', 'o', 'v', 'd', '^', '*', 'X']
+    col_order = ['DCGAN', 'BEGAN', 'VAE']
+    hue_order = ['With Surgery', 'IAGAN', 'DD', 'MGAN', ]
+
+    if split == 'test_celeba':
+        ylim = (15, 45)
+        yt = range(15, 46, 5)
+    elif split == 'ood-coco':
+        ylim = (15, 40)
+        yt = range(15, 41, 5)
+
+    plt.figure()
+
+    g = sns.FacetGrid(data=df,
+                      col='type',
+                      col_order=col_order,
+                      hue='model_name',
+                      hue_order=hue_order,
+                      hue_kws=dict(marker=filled_markers),
+                      height=12,
+                      sharey=False,
+                      aspect=1.3,
+                      legend_out=True,
+                      xlim=(0,0.5),
+                      ylim=ylim,
+                     )
+    g = (g.map(sns.lineplot, 'undersampling_ratio', 'psnr', ci='sd', markersize=20))
+
+    (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
+        "PSNR (dB)").set_titles("{col_name}",
+                                size=36).fig.subplots_adjust(bottom=0.25))
+
+    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
+    
+    handles = g._legend_data.values()
+    labels = g._legend_data.keys()
+    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=4)
+
+    os.makedirs('./figures/cs_baselines', exist_ok=True)
+    plt.savefig((f'./figures/cs_baselines/'
+                 f'cs_baselines_plot_split={split}.pdf'),
+                dpi=300,
+                bbox_inches='tight')
+
 def opt_error_plot():
     def split_fn(row):
-        if row['split'] == 'train_celeba128_cropped20':
+        if row['split'] == 'train_celeba128_cropped100':
             return 'Train'
-        elif row['split'] == 'test_celeba128_cropped20':
+        elif row['split'] == 'test_celeba128_cropped100':
             return 'Test'
-        elif row['split'] == 'ood-coco20':
+        elif row['split'] == 'ood-coco100':
             return 'OOD'
-        elif row['split'] == 'began_generated20':
+        elif row['split'] == 'began_generated100':
             return 'Fake'
         else:
             return ''
@@ -43,8 +257,8 @@ def opt_error_plot():
 
     df = df.loc[((df['model'] == 'began_opt_error_fake_imgs') &
                  (df['split'].isin([
-                     'train_celeba128_cropped20', 'test_celeba128_cropped20',
-                     'began_generated20', 'ood-coco20'
+                     'train_celeba128_cropped100', 'test_celeba128_cropped100',
+                     'began_generated100', 'ood-coco100'
                  ])))]
     df['split_name'] = df.apply(lambda row: split_fn(row), axis=1)
     df['type'] = df.apply(lambda row: type_fn(row), axis=1)
@@ -157,240 +371,7 @@ def best_cuts_plot(model):
                 bbox_inches='tight')
 
 
-def create_cs_plot(split):
-    def name_fn(row):
-        if row['model'].startswith('lasso-dct'):
-            return 'Lasso-DCT'
-        elif row['n_cuts'] == 0:
-            return 'No Surgery'
-        else:
-            return 'With Surgery'
 
-    def ratio_fn(row):
-        if row['type'] == 'DCGAN':
-            image_size = 64
-        elif row['type'] in ['BEGAN', 'VAE']:
-            image_size = 128
-
-        return row['n_measure'] / (3 * image_size * image_size)
-
-    with open('./final_runs/processed_results/df_baseline_results.pkl',
-              'rb') as f:
-        df_baseline = pickle.load(f)
-    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
-        df_results = pickle.load(f)
-
-    if split == 'test_celeba':
-        split_name = [
-            # 'test_celeba64_cropped100',
-            'test_celeba64_cropped20',
-            'test_celeba128_cropped100',
-        ]
-    elif split == 'ood-coco':
-        split_name = ['ood-coco100']
-
-    df1 = pd.concat([
-        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-64')
-                        & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing') &
-                       # & (df_results['model'] == 'dcgan_cs') &
-                       (df_results['model'] == 'dcgan_restarts_cs') &
-                       (df_results['n_cuts'].isin([0, 1])) &
-                       (df_results['split'].isin(split_name))]
-    ])
-    df1['type'] = 'DCGAN'
-    df2 = pd.concat([
-        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
-                        & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
-                       & (df_results['model'] == 'began_cs') &
-                       (df_results['n_cuts'].isin([0, 3])) &
-                       (df_results['split'].isin(split_name))]
-    ])
-    df2['type'] = 'BEGAN'
-    df3 = pd.concat([
-        df_baseline.loc[(df_baseline['model'] == 'lasso-dct-128')
-                        & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
-                       & (df_results['model'].isin(['vanilla_vae_cs'])) &
-                       (df_results['n_cuts'].isin([0, 2])) &
-                       (df_results['split'].isin(split_name))]
-    ])
-    df3['type'] = 'VAE'
-
-    df = pd.concat([df1, df2, df3])
-
-    df['undersampling_ratio'] = df.apply(lambda row: ratio_fn(row), axis=1)
-    df['model_name'] = df.apply(lambda row: name_fn(row), axis=1)
-
-    sns.set(rc={'figure.figsize': (16, 9)})
-    sns.set_style('ticks')
-    sns.set_context('poster', font_scale=1.4)
-    filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
-    legend_order = ['Lasso-DCT', 'No Surgery', 'With Surgery']
-
-    ylim = (5, 40)
-    yt = range(5, 41, 5)
-
-    plt.figure()
-
-    g = sns.FacetGrid(df,
-                      col="type",
-                      hue='model_name',
-                      hue_order=legend_order,
-                      hue_kws=dict(marker=filled_markers),
-                      height=8,
-                      aspect=1.3,
-                      legend_out=True,
-                      xlim=(0, 0.5),
-                      ylim=ylim)
-    g = (g.map(sns.lineplot, "undersampling_ratio", "psnr", ci='sd'))
-
-    (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
-        "PSNR (dB)").set_titles("{col_name}",
-                                size=36).fig.subplots_adjust(bottom=0.3))
-
-    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
-
-    handles = g._legend_data.values()
-    labels = g._legend_data.keys()
-    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
-
-    os.makedirs('./figures/cs_plot', exist_ok=True)
-    plt.savefig((f'./figures/cs_plot/'
-                 f'cs_plot_split={split}.pdf'),
-                dpi=300,
-                bbox_inches='tight')
-
-
-def create_cs_plot_baselines(split):
-    def name_fn(row):
-        if row['model'].startswith('iagan'):
-            return 'IAGAN'
-        elif row['model'].startswith('mgan'):
-            return 'MGAN'
-        else:
-            return 'Surgery'
-
-    def ratio_fn(row):
-        if row['type'] == 'DCGAN':
-            image_size = 64
-        elif row['type'] in ['BEGAN', 'VAE']:
-            image_size = 128
-
-        return row['n_measure'] / (3 * image_size * image_size)
-
-    with open('./final_runs/processed_results/df_baseline_results.pkl',
-              'rb') as f:
-        df_baseline = pickle.load(f)
-    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
-        df_results = pickle.load(f)
-
-    if split == 'test_celeba':
-        split_name = [
-            'val_celeba64_cropped20',
-            'val_celeba128_cropped20',
-        ]
-    elif split == 'ood-coco':
-        split_name = ['val_ood-coco20']
-
-    # dcgan
-    df1 = pd.concat([
-        # iagan
-        df_results.loc[(df_results['model'] == 'iagan_dcgan_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # mgan
-        df_results.loc[(df_results['model'] == 'mgan_dcgan_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # surgery
-        df_results.loc[(df_results['model'] == 'dcgan_cs')
-                       & (df_results['split'].isin(split_name)) &
-                       (df_results['fm'] == 'GaussianCompressiveSensing') &
-                       (df_results['n_cuts'] == 1)],
-    ])
-    df1['type'] = 'DCGAN'
-
-    # began
-    df2 = pd.concat([
-        # iagan
-        df_results.loc[(df_results['model'] == 'iagan_began_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # mgan
-        df_results.loc[(df_results['model'] == 'mgan_began_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # surgery
-        df_results.loc[(df_results['model'] == 'began_cs')
-                       & (df_results['split'].isin(split_name)) &
-                       (df_results['fm'] == 'GaussianCompressiveSensing') &
-                       (df_results['n_cuts'] == 2)],
-    ])
-    df2['type'] = 'BEGAN'
-
-    # vanilla vae
-    df3 = pd.concat([
-        # iagan
-        df_results.loc[(df_results['model'] == 'iagan_vanilla_vae_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # mgan
-        df_results.loc[(df_results['model'] == 'mgan_vanilla_vae_cs')
-                       & (df_results['split'].isin(split_name))],
-
-        # surgery
-        df_results.loc[(df_results['model'] == 'vanilla_vae_cs')
-                       & (df_results['split'].isin(split_name)) &
-                       (df_results['fm'] == 'GaussianCompressiveSensing') &
-                       (df_results['n_cuts'] == 2)],
-    ])
-    df3['type'] = 'VAE'
-
-    df = pd.concat([df1, df2, df3])
-
-    df['undersampling_ratio'] = df.apply(lambda row: ratio_fn(row), axis=1)
-    df['model_name'] = df.apply(lambda row: name_fn(row), axis=1)
-
-    sns.set(rc={'figure.figsize': (16, 9)})
-    sns.set_style('ticks')
-    sns.set_context('poster', font_scale=1.4)
-    filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
-    legend_order = ['Surgery', 'IAGAN', 'MGAN']
-
-    ylim = (5, 40)
-    yt = range(5, 41, 5)
-
-    plt.figure()
-
-    g = sns.FacetGrid(df,
-                      col="type",
-                      hue='model_name',
-                      hue_order=legend_order,
-                      hue_kws=dict(marker=filled_markers),
-                      height=8,
-                      aspect=1.3,
-                      legend_out=True,
-                      xlim=(0, 0.5),
-                      ylim=ylim)
-    g = (g.map(sns.lineplot, "undersampling_ratio", "psnr", ci='sd'))
-
-    (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
-        "PSNR (dB)").set_titles("{col_name}",
-                                size=36).fig.subplots_adjust(bottom=0.3))
-
-    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
-
-    handles = g._legend_data.values()
-    labels = g._legend_data.keys()
-    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
-
-    os.makedirs('./figures/cs_plot_baselines', exist_ok=True)
-    plt.savefig((f'./figures/cs_plot_baselines/'
-                 f'cs_plot_baselines_split={split}.pdf'),
-                dpi=300,
-                bbox_inches='tight')
 
 
 def noop_plot():
@@ -401,25 +382,21 @@ def noop_plot():
     def _split_fn(row):
         if 'celeba' in row['split']:
             return 'Test'
-        elif row['split'] == 'ood-coco20':
+        elif row['split'] == 'ood-coco100':
             return 'OOD'
         else:
             return ''
 
     # Filters
-    df = df_results.loc[(df_results['model'].isin([
-        'began_noop', 'vanilla_vae_noop', 'biggan_noop', 'beta_vae_noop',
-        'dcgan_noop'
-    ])) & (df_results['split'].isin([
-        'test_celeba64_cropped20', 'test_celeba128_cropped20', 'celebahq20',
-        'ood-coco20'
-    ]))]
-    df = df.loc[((df['model'] == 'began_noop') & (df['n_cuts'].isin([0, 3]))) |
-                ((df['model'] == 'biggan_noop') & (df['n_cuts'].isin([0, 7])))
-                | ((df['model'] == 'vanilla_vae_noop') &
-                   (df['n_cuts'].isin([0, 2]))) |
-                ((df['model'] == 'beta_vae_noop') &
-                 (df['n_cuts'].isin([0, 2]))) |
+    df = df_results.loc[(df_results['model'].isin(
+        ['began_noop', 'vanilla_vae_noop', 'dcgan_noop']))
+                        & (df_results['split'].isin([
+                            'test_celeba64_cropped100',
+                            'test_celeba128_cropped100', 'ood-coco100'
+                        ]))]
+    df = df.loc[((df['model'] == 'began_noop') & (df['n_cuts'].isin([0, 2]))) |
+                ((df['model'] == 'vanilla_vae_noop') &
+                 (df['n_cuts'].isin([0, 1]))) |
                 ((df['model'] == 'dcgan_noop') & (df['n_cuts'].isin([0, 1])))]
     df = df.loc[df['fm'] == 'NoOp']
 
@@ -437,7 +414,7 @@ def noop_plot():
     sns.set_context('poster', font_scale=1.4)
 
     legend_order = ['No Surgery', 'With Surgery']
-    model_order = ['DCGAN', 'BEGAN', 'VAE', 'β-VAE', 'BigGAN']
+    model_order = ['DCGAN', 'BEGAN', 'VAE']
     split_order = ['Test', 'OOD']
 
     g = sns.catplot(data=df,
@@ -629,7 +606,7 @@ def cs_other_init_plot(split, n_measure):
                         & (df_baseline['n_measure'] == n_measure)],
         df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
                        & (df_results['model'] == 'began_cs_other_init') &
-                       (df_results['n_cuts'].isin([3])) &
+                       (df_results['n_cuts'].isin([2])) &
                        (df_results['n_measure'] == n_measure)]
     ])
 
@@ -1039,18 +1016,10 @@ def cs_single_image(img_name, split, model, n_measure, n_cuts):
     ax[1].set_frame_on(False)
 
     # n_cuts=0
-    n_0_path_a = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.recover_batch_size=1.n_cuts=0.z_init_mode=clamped_normal.limit=1'
-    n_0_path_b = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts=0'
-
-    try:
-        n0_img = torch.load(
-            f'{n_0_path_a}/recovered.pt').cpu().numpy().transpose([1, 2, 0])
-        n0_psnr = pickle.load(open(f'{n_0_path_a}/psnr_clamped.pkl', 'rb'))
-
-    except FileNotFoundError:
-        n0_img = torch.load(
-            f'{n_0_path_b}/recovered.pt').cpu().numpy().transpose([1, 2, 0])
-        n0_psnr = pickle.load(open(f'{n_0_path_b}/psnr_clamped.pkl', 'rb'))
+    n_0_path = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.restarts=3.n_cuts=0.z_init_mode=clamped_normal.limit=1'
+    n0_img = torch.load(f'{n_0_path}/recovered.pt').cpu().numpy().transpose(
+        [1, 2, 0])
+    n0_psnr = pickle.load(open(f'{n_0_path}/psnr_clamped.pkl', 'rb'))
 
     ax[2].set_xlabel(f'No Surgery\n{n0_psnr:0.2f}dB', fontsize=fontsize)
     ax[2].imshow(np.clip(n0_img, 0, 1))
@@ -1059,22 +1028,11 @@ def cs_single_image(img_name, split, model, n_measure, n_cuts):
     ax[2].set_frame_on(False)
 
     # n_cuts=best
-    n_chosen_path_a = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.recover_batch_size=1.n_cuts={n_cuts}.z_init_mode=clamped_normal.limit=1'
-    n_chosen_path_b = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts={n_cuts}'
-
-    try:
-        n_chosen_img = torch.load(
-            f'{n_chosen_path_a}/recovered.pt').cpu().numpy().transpose(
-                [1, 2, 0])
-        n_chosen_psnr = pickle.load(
-            open(f'{n_chosen_path_a}/psnr_clamped.pkl', 'rb'))
-
-    except FileNotFoundError:
-        n_chosen_img = torch.load(
-            f'{n_chosen_path_b}/recovered.pt').cpu().numpy().transpose(
-                [1, 2, 0])
-        n_chosen_psnr = pickle.load(
-            open(f'{n_chosen_path_b}/psnr_clamped.pkl', 'rb'))
+    n_chosen_path = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/GaussianCompressiveSensing.n_measure={n_measure}/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.restarts=3.n_cuts={n_cuts}.z_init_mode=clamped_normal.limit=1'
+    n_chosen_img = torch.load(
+        f'{n_chosen_path}/recovered.pt').cpu().numpy().transpose([1, 2, 0])
+    n_chosen_psnr = pickle.load(open(f'{n_chosen_path}/psnr_clamped.pkl',
+                                     'rb'))
 
     ax[3].imshow(np.clip(n_chosen_img, 0, 1))
     ax[3].set_xticks([])
@@ -1091,7 +1049,7 @@ def cs_images(top_n):
         df = pickle.load(f)
     params = {
         'began_cs': {
-            'n_cuts': 3,
+            'n_cuts': 2,
             'n_measure': 8000,
             'split': ['test_celeba128_cropped100', 'ood-coco100']
         },
@@ -1101,7 +1059,7 @@ def cs_images(top_n):
             'split': ['test_celeba64_cropped100', 'ood-coco100']
         },
         'vanilla_vae_cs': {
-            'n_cuts': 2,
+            'n_cuts': 1,
             'n_measure': 8000,
             'split': ['test_celeba128_cropped100', 'ood-coco100']
         }
@@ -1369,6 +1327,8 @@ def cut_training(n_cols):
             img = g.forward(
                 z1, z2, n_cuts=1).detach().cpu().squeeze(0).numpy().transpose(
                     [1, 2, 0])
+            # Rescale from [-1, 1] to [0, 1]
+            img = (img + 1) / 2
             ax[i - 1, col].imshow(np.clip(img, 0, 1), aspect='auto')
             ax[i - 1, col].set_xticks([])
             ax[i - 1, col].set_yticks([])
@@ -1382,107 +1342,22 @@ def cut_training(n_cols):
                 dpi=300)
 
 
-def baseline_comparison(split):
-    def _name_fn(row):
-        if row['model'].startswith('mgan'):
-            return 'MGAN'
-        else:
-            if row['n_cuts'] == 0:
-                return 'No Surgery'
-            else:
-                return 'With Surgery'
-
-    def _type_fn(row):
-        if 'dcgan' in row['model']:
-            return 'DCGAN'
-        elif 'began' in row['model']:
-            return 'BEGAN'
-        elif 'vae' in row['model']:
-            return 'VAE'
-        else:
-            return ''
-
-    def _ratio_fn(row):
-        if row['type'] == 'DCGAN':
-            image_size = 64
-        elif row['type'] in ['BEGAN', 'VAE']:
-            image_size = 128
-
-        return row['n_measure'] / (3 * image_size * image_size)
-
-    df = pd.read_pickle('./final_runs/processed_results/df_results.pkl')
-
-    if split == 'test_celeba':
-        splits = ['test_celeba64_cropped100', 'test_celeba128_cropped100']
-    elif split == 'ood-coco':
-        splits = ['ood-coco100']
-
-    df = df.loc[((df['model'] == 'began_cs') & (df['n_cuts'].isin([0, 3]))) |
-                ((df['model'] == 'mgan_began_cs') & (df['n_cuts'] == 2)) |
-                ((df['model'] == 'dcgan_cs') & (df['n_cuts'].isin([0, 1]))) |
-                ((df['model'] == 'mgan_dcgan_cs') &
-                 (df['n_cuts'] == 1)) | ((df['model'] == 'vanilla_vae_cs') &
-                                         (df['n_cuts'].isin([0, 2]))) |
-                ((df['model'] == 'mgan_vanilla_vae_cs') & (df['n_cuts'] == 1))]
-    df = df.loc[df['split'].isin(splits)]
-
-    df.loc[:, 'type'] = df.apply(lambda row: _type_fn(row), axis=1)
-    df.loc[:, 'model_name'] = df.apply(lambda row: _name_fn(row), axis=1)
-    df.loc[:, 'undersampling_ratio'] = df.apply(lambda row: _ratio_fn(row),
-                                                axis=1)
-
-    sns.set(rc={'figure.figsize': (16, 9)})
-    sns.set_style('ticks')
-    sns.set_context('poster', font_scale=1.4)
-    filled_markers = ['d', 'o', 'v', 'D', '^', '*', 'X']
-    col_order = ['DCGAN', 'BEGAN', 'VAE']
-    hue_order = ['No Surgery', 'With Surgery', 'MGAN']
-
-    ylim = (5, 40)
-    yt = range(5, 41, 5)
-
-    plt.figure()
-
-    g = sns.FacetGrid(data=df,
-                      col='type',
-                      col_order=col_order,
-                      hue='model_name',
-                      hue_order=hue_order,
-                      hue_kws=dict(marker=filled_markers),
-                      height=8,
-                      aspect=1.3,
-                      legend_out=True,
-                      xlim=(0, 0.5),
-                      ylim=ylim)
-    g = (g.map(sns.lineplot, 'undersampling_ratio', 'psnr', ci='sd'))
-    (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
-        "PSNR (dB)").set_titles("{col_name}",
-                                size=36).fig.subplots_adjust(bottom=0.3))
-    g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
-
-    handles = g._legend_data.values()
-    labels = g._legend_data.keys()
-    g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=3)
-
-    os.makedirs('./figures/baseline_comparison', exist_ok=True)
-    plt.savefig(
-        f'./figures/baseline_comparison/baseline_comparison_split={split}.png',
-        dpi=300,
-        bbox_inches='tight')
-
-
 if __name__ == '__main__':
     # Aggregate results
     print('Parsing results...')
     parse_baseline_results_folder('./final_runs/baseline_results')
     parse_results_folder('./final_runs/results')
 
+    print('CS plots...')
+    cs_plot('test_celeba')
+    cs_plot('ood-coco')
+    
+    print('Baseline comparison plots...')
+    cs_baselines_plot('test_celeba')
+    cs_baselines_plot('ood-coco')
+    
     # print('NoOp images...')
     # noop_images(2)
-
-    # print('CS plots...')
-    # create_cs_plot('test_celeba')
-    # create_cs_plot('ood-coco')
 
     # print('CS images...')
     # cs_images(20)
@@ -1501,10 +1376,10 @@ if __name__ == '__main__':
     # cs_other_init_plot('test_celeba128_cropped100', 8000)
     # cs_other_init_plot('ood-coco100', 8000)
 
-    print('Best Cuts plots...')
-    best_cuts_plot('dcgan_cs_n_cuts')
-    best_cuts_plot('began_cs_n_cuts')
-    best_cuts_plot('vanilla_vae_cs_n_cuts')
+    # print('Best Cuts plots...')
+    # best_cuts_plot('dcgan_cs_n_cuts')
+    # best_cuts_plot('began_cs_n_cuts')
+    # best_cuts_plot('vanilla_vae_cs_n_cuts')
 
     # print('Generator samples...')
     # generator_samples('dcgan')
@@ -1515,9 +1390,7 @@ if __name__ == '__main__':
     # print('Opt error plots...')
     # opt_error_plot()
 
-    # print('Cut training images...')
-    # cut_training(4)
+#     print('Cut training images...')
+#     cut_training(4)
 
-    # print('Baseline comparison plots...')
-    # baseline_comparison('test_celeba')
-    # baseline_comparison('ood-coco')
+
