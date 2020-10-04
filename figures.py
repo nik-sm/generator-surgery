@@ -36,16 +36,14 @@ def cs_plot(split):
 
         return row['n_measure'] / (3 * image_size * image_size)
 
-    with open('./final_runs/processed_results/df_baseline_results.pkl',
-              'rb') as f:
-        df_baseline = pickle.load(f)
-    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
-        df_results = pickle.load(f)
+    df_baseline = pd.read_pickle(
+        './final_runs/processed_results/df_baseline_results.pkl')
+    df_results = pd.read_pickle(
+        './final_runs/processed_results/df_results.pkl')
 
     if split == 'test_celeba':
         split_name = [
             'test_celeba64_cropped100',
-            # 'test_celeba64_cropped20',
             'test_celeba128_cropped100',
         ]
     elif split == 'ood-coco':
@@ -54,9 +52,8 @@ def cs_plot(split):
     df1 = pd.concat([
         df_baseline.loc[(df_baseline['model'] == 'lasso-dct-64')
                         & (df_baseline['split'].isin(split_name))],
-        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing') &
-                       # & (df_results['model'] == 'dcgan_cs') &
-                       (df_results['model'] == 'dcgan_cs') &
+        df_results.loc[(df_results['fm'] == 'GaussianCompressiveSensing')
+                       & (df_results['model'] == 'dcgan_cs') &
                        (df_results['n_cuts'].isin([0, 1])) &
                        (df_results['split'].isin(split_name))]
     ])
@@ -110,9 +107,12 @@ def cs_plot(split):
                       aspect=1.3,
                       legend_out=True,
                       xlim=(0, 0.5),
-                      ylim=ylim
-                     )
-    g = (g.map(sns.lineplot, "undersampling_ratio", "psnr", ci='sd', markersize=20))
+                      ylim=ylim)
+    g = (g.map(sns.lineplot,
+               "undersampling_ratio",
+               "psnr",
+               ci='sd',
+               markersize=20))
 
     (g.set_xlabels(r"Undersampling Ratio ($m/n$)").set_ylabels(
         "PSNR (dB)").set_titles("{col_name}",
@@ -146,42 +146,42 @@ def cs_baselines_plot(split):
         if row['type'] == 'DCGAN':
             image_size = 64
         elif row['type'] in ['BEGAN', 'VAE']:
-            image_size =128
+            image_size = 128
 
         return row['n_measure'] / (3 * image_size * image_size)
 
-    with open('./final_runs/processed_results/df_baseline_results.pkl',
-              'rb') as f:
-        df_baseline = pickle.load(f)
-    with open('./final_runs/processed_results/df_results.pkl', 'rb') as f:
-        df_results = pickle.load(f)
+    df_results = pd.read_pickle(
+        './final_runs/processed_results/df_results.pkl')
 
     if split == 'test_celeba':
-        splits = ['test_celeba64_cropped100', 'test_celeba128_cropped100']
+        split_name = ['test_celeba64_cropped100', 'test_celeba128_cropped100']
     elif split == 'ood-coco':
-        splits = ['ood-coco100']
+        split_name = ['ood-coco100']
 
-    df1 = df_results.loc[((df_results['model'] == 'dcgan_cs') & (df_results['n_cuts'] == 1)) |
-                 (df_results['model'] == 'mgan_dcgan_cs') |
-                 (df_results['model'] == 'iagan_dcgan_cs') |
-                 (df_results['model'] == 'deep_decoder_64_cs')].copy()
+    df1 = df_results.loc[((df_results['model'] == 'dcgan_cs') &
+                          (df_results['n_cuts'] == 1)) |
+                         (df_results['model'] == 'mgan_dcgan_cs') |
+                         (df_results['model'] == 'iagan_dcgan_cs') |
+                         (df_results['model'] == 'deep_decoder_64_cs')].copy()
     df1['type'] = 'DCGAN'
 
-    df2 = df_results.loc[((df_results['model'] == 'began_cs') & (df_results['n_cuts'] == 2)) |
-                (df_results['model'] == 'mgan_began_cs') |
-                 (df_results['model'] == 'iagan_began_cs') |
-                 (df_results['model'] == 'deep_decoder_128_cs')].copy()
+    df2 = df_results.loc[
+        ((df_results['model'] == 'began_cs') & (df_results['n_cuts'] == 2)) |
+        (df_results['model'] == 'mgan_began_cs') |
+        (df_results['model'] == 'iagan_began_cs') |
+        (df_results['model'] == 'deep_decoder_128_cs')].copy()
     df2['type'] = 'BEGAN'
 
-
-    df3 = df_results.loc[((df_results['model'] == 'vanilla_vae_cs') & (df_results['n_cuts'] == 1)) |
-                (df_results['model'] == 'mgan_vanilla_vae_cs') |
-                 (df_results['model'] == 'iagan_vanilla_vae_cs') |
-                 (df_results['model'] == 'deep_decoder_128_cs')].copy()
+    df3 = df_results.loc[
+        ((df_results['model'] == 'vanilla_vae_cs') &
+         (df_results['n_cuts'] == 1)) |
+        (df_results['model'] == 'mgan_vanilla_vae_cs') |
+        (df_results['model'] == 'iagan_vanilla_vae_cs') |
+        (df_results['model'] == 'deep_decoder_128_cs')].copy()
     df3['type'] = 'VAE'
 
     df = pd.concat([df1, df2, df3])
-    df = df[df['split'].isin(splits)]
+    df = df[df['split'].isin(split_name)]
 
     df['model_name'] = df.apply(lambda row: _name_fn(row), axis=1)
     df['undersampling_ratio'] = df.apply(lambda row: _ratio_fn(row), axis=1)
@@ -191,7 +191,12 @@ def cs_baselines_plot(split):
     sns.set_context('poster', font_scale=1.6)
     filled_markers = ['D', 'o', 'v', 'd', '^', '*', 'X']
     col_order = ['DCGAN', 'BEGAN', 'VAE']
-    hue_order = ['With Surgery', 'IAGAN', 'DD', 'MGAN', ]
+    hue_order = [
+        'With Surgery',
+        'IAGAN',
+        'DD',
+        'MGAN',
+    ]
 
     if split == 'test_celeba':
         ylim = (15, 45)
@@ -202,27 +207,32 @@ def cs_baselines_plot(split):
 
     plt.figure()
 
-    g = sns.FacetGrid(data=df,
-                      col='type',
-                      col_order=col_order,
-                      hue='model_name',
-                      hue_order=hue_order,
-                      hue_kws=dict(marker=filled_markers),
-                      height=12,
-                      sharey=False,
-                      aspect=1.3,
-                      legend_out=True,
-                      xlim=(0,0.5),
-                      ylim=ylim,
-                     )
-    g = (g.map(sns.lineplot, 'undersampling_ratio', 'psnr', ci='sd', markersize=20))
+    g = sns.FacetGrid(
+        data=df,
+        col='type',
+        col_order=col_order,
+        hue='model_name',
+        hue_order=hue_order,
+        hue_kws=dict(marker=filled_markers),
+        height=12,
+        sharey=False,
+        aspect=1.3,
+        legend_out=True,
+        xlim=(0, 0.5),
+        ylim=ylim,
+    )
+    g = (g.map(sns.lineplot,
+               'undersampling_ratio',
+               'psnr',
+               ci='sd',
+               markersize=20))
 
     (g.set_xlabels("Undersampling Ratio (m/n)").set_ylabels(
         "PSNR (dB)").set_titles("{col_name}",
                                 size=36).fig.subplots_adjust(bottom=0.25))
 
     g.set(xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5], yticks=yt)
-    
+
     handles = g._legend_data.values()
     labels = g._legend_data.keys()
     g.fig.legend(handles=handles, labels=labels, loc='lower center', ncol=4)
@@ -232,6 +242,7 @@ def cs_baselines_plot(split):
                  f'cs_baselines_plot_split={split}.pdf'),
                 dpi=300,
                 bbox_inches='tight')
+
 
 def opt_error_plot():
     def split_fn(row):
@@ -369,9 +380,6 @@ def best_cuts_plot(model):
                  f'best_cuts_model={model}.pdf'),
                 dpi=300,
                 bbox_inches='tight')
-
-
-
 
 
 def noop_plot():
@@ -649,30 +657,24 @@ def cs_other_init_plot(split, n_measure):
 
 
 def noop_single_image(img_name, split, model, size, n_cuts):
-    if model == 'biggan_noop':
-        # title_fontsize = 20
-        # label_fontsize = 16
-        # model_name = "BigGAN"
-        z_lr = 1.5
-        n_steps = 200
-    elif model in ['vanilla_vae_noop', 'beta_vae_noop']:
+    if model == 'dcgan_noop':
         # title_fontsize = 40
         # label_fontsize = 32
-        # model_name = 'VAE' if model == 'vanilla_vae' else 'β-VAE'
+        # model_name = "DCGAN"
         z_lr = 1
-        n_steps = 40
+        n_steps = 100
     elif model == 'began_noop':
         # title_fontsize = 40
         # label_fontsize = 32
         # model_name = "BEGAN"
         z_lr = 1
         n_steps = 100
-    elif model == 'dcgan_noop':
+    elif model in ['vanilla_vae_noop']:
         # title_fontsize = 40
         # label_fontsize = 32
-        # model_name = "DCGAN"
+        # model_name = 'VAE' if model == 'vanilla_vae' else 'β-VAE'
         z_lr = 1
-        n_steps = 100
+        n_steps = 40
     else:
         raise NotImplementedError(model)
 
@@ -690,8 +692,8 @@ def noop_single_image(img_name, split, model, size, n_cuts):
     ax[0].set_frame_on(False)
 
     # Naive model
-    n_0_path_a = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.recover_batch_size=1.n_cuts=0.z_init_mode=clamped_normal.limit=1'
-    n_0_path_b = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts=0'
+    n_0_path_a = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.restarts=3.n_cuts=0.z_init_mode=clamped_normal.limit=1'
+    # n_0_path_b = f'./final_runs/results/{model}/n_cuts=0/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts=0'
 
     try:
         n0_img = torch.load(
@@ -711,8 +713,8 @@ def noop_single_image(img_name, split, model, size, n_cuts):
     ax[1].set_frame_on(False)
 
     # Best model
-    n_chosen_path_a = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.recover_batch_size=1.n_cuts={n_cuts}.z_init_mode=clamped_normal.limit=1'
-    n_chosen_path_b = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts={n_cuts}'
+    n_chosen_path_a = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.restarts=3.n_cuts={n_cuts}.z_init_mode=clamped_normal.limit=1'
+    # n_chosen_path_b = f'./final_runs/results/{model}/n_cuts={n_cuts}/{split}/{img_name}/NoOp/optimizer=lbfgs.n_steps={n_steps}.z_lr={z_lr}.z_init_mode=clamped_normal.recover_batch_size=1.limit=1.n_cuts={n_cuts}'
     try:
         n_chosen_img = torch.load(
             f'{n_chosen_path_a}/recovered.pt').cpu().numpy().transpose(
@@ -742,23 +744,23 @@ def noop_images(top_n):
         df = pickle.load(f)
 
     params = {
+        'dcgan_noop': {
+            'n_cuts': 1,
+            'size': 64,
+        },
         'began_noop': {
-            'n_cuts': 3,
+            'n_cuts': 2,
             'size': 128,
         },
         'vanilla_vae_noop': {
-            'n_cuts': 2,
+            'n_cuts': 1,
             'size': 128
-        },
-        'biggan_noop': {
-            'n_cuts': 7,
-            'size': 512
         },
     }
 
     for split in [
-            'pretty_pictures_began', 'pretty_pictures_biggan',
-            'pretty_pictures_vae'
+            'test_celeba64_cropped100', 'test_celeba128_cropped100',
+            'ood-coco100'
     ]:
         for model, kwargs in params.items():
             os.makedirs(f'./figures/noop_images/{model}', exist_ok=True)
@@ -1351,16 +1353,20 @@ if __name__ == '__main__':
     print('CS plots...')
     cs_plot('test_celeba')
     cs_plot('ood-coco')
-    
+
     print('Baseline comparison plots...')
     cs_baselines_plot('test_celeba')
     cs_baselines_plot('ood-coco')
-    
-    # print('NoOp images...')
-    # noop_images(2)
 
-    # print('CS images...')
-    # cs_images(20)
+    print('CS images...')
+    cs_images(20)
+
+    # print('CS Other Init plots...')
+    # cs_other_init_plot('test_celeba128_cropped100', 8000)
+    # cs_other_init_plot('ood-coco100', 8000)
+
+    # print('NoOp images...')
+    # noop_images(20)
 
     # print('Inverse images...')
     # inverse_images(20)
@@ -1371,10 +1377,6 @@ if __name__ == '__main__':
 
     # print('NoOP plots...')
     # noop_plot()
-
-    # print('CS Other Init plots...')
-    # cs_other_init_plot('test_celeba128_cropped100', 8000)
-    # cs_other_init_plot('ood-coco100', 8000)
 
     # print('Best Cuts plots...')
     # best_cuts_plot('dcgan_cs_n_cuts')
@@ -1390,7 +1392,5 @@ if __name__ == '__main__':
     # print('Opt error plots...')
     # opt_error_plot()
 
-#     print('Cut training images...')
-#     cut_training(4)
-
-
+    # print('Cut training images...')
+    # cut_training(4)
