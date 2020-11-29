@@ -1,6 +1,11 @@
-# GAN Surgery for Compressed Sensing and Inverse Problems
+# Generator Surgery for Compressed Sensing
+by Jung Yeon Park\*, Niklas Smedemark-Margulies\*, Max Daniels, Rose Yu, Jan-Willem van de Meent, and Paul Hand
 
-![GAN Surgery](assets/gan_surgery.png)
+(\*) equal contribution
+
+![Generator Surgery](assets/generator_surgery.png)
+
+In this work, we show that cutting initial layers of a generative signal prior at test time improves image recovery performance.
 
 # Requirements
 
@@ -24,32 +29,31 @@ A 95:5 train:test split is used.
 
 1. Download the aligned Celeba dataset. This can be done using PyTorch in a python REPL as follows:
 
-Note that the CelebA google drive has limited downloads per day, so if this fails, the contents of the `*.zip` files will be junk, and you must wait and try again.
+    Note that the CelebA google drive has limited downloads per day, so if this fails, the contents of the `*.zip` files will be junk, and you must wait and try again.
 
-```python
-import torchvision.datasets as d
-c = d.CelebA('./data', download=True)
-```
+    ```python
+    import torchvision.datasets as d
+    c = d.CelebA('./data', download=True)
+    ```
 
 2. Now you should have a folder `./data/celeba/img_align_celeba`. Run the preprocessing:
 
-```bash
-DATASET=celeba # For DCGAN, use DATASET=celeba64x64
-IMG_SIZE=128 # For DCGAN, use IMG_SIZE=64
-DATASET_DIR=${DATASET}_preprocessed
-python data/preprocess_images.py --dataset $DATASET \
-  --input_dir ./data/celeba \
-  --output_dir ./data/${DATASET_DIR} \
-  --img_size 64 \
-  --n -1
-```
+    ```bash
+    DATASET=celeba # For DCGAN, use DATASET=celeba64x64
+    IMG_SIZE=128 # For DCGAN, use IMG_SIZE=64
+    DATASET_DIR=${DATASET}_preprocessed
+    python data/preprocess_images.py --dataset $DATASET \
+      --input_dir ./data/celeba \
+      --output_dir ./data/${DATASET_DIR} \
+      --img_size 64 \
+      --n -1
+    ```
 
 # Training Generative Models
 
 Before training, you should have run preprocessing as described in [Datasets and Preprocessing](#datasets-and-preprocessing).
 
-## BEGAN
-
+## [BEGAN](model/began.py)
 To start training:
 
 ```bash
@@ -67,9 +71,7 @@ To monitor training:
 tensorboard --logdir ./tensorboard_logs
 ```
 
-See the [BEGAN model definition](model/began.py) for more details.
-
-## DCGAN
+## [DCGAN](model/dcgan.py)
 To start training:
 ```bash
 python train_dcgan.py
@@ -80,28 +82,19 @@ To monitor training:
 tensorboard --logdir ./dcgan_tensorboard_logs
 ```
 
-See the [DCGAN model definition](model/dcgan.py) for more details.
-
-## VAE and beta-VAE
+## [VAE](model/vae.py)
 To train VAE:
 ```bash
 python train_vae.py --epochs 20
-```
-
-To train beta-VAE:
-```bash
-python train_vae.py --epochs 20 --beta 0.1
 ```
 
 To monitor training:
 ```bash
 tensorboard --logdir ./vae_tensorboard_logs
 ```
-See the [VAE model definition](model/vae.py) for more details.
 
-## BigGAN
+## [BigGAN](model/biggan.py)
 BigGAN's model definition is a patched version of the pre-trained model provided by [Hugging Face](https://github.com/huggingface/pytorch-pretrained-BigGAN/).
-See the model definition file at [BigGAN](model/biggan.py).
 
 # Running Inverse Imaging Experiments
 Our experiments are launched for a fixed set of inverse problems, using fixed optimization hyperparams, for an entire folder of images at a time.
