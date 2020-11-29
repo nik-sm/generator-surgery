@@ -3,9 +3,13 @@ by Jung Yeon Park\*, Niklas Smedemark-Margulies\*, Max Daniels, Rose Yu, Jan-Wil
 
 (\*) equal contribution
 
-![Generator Surgery](assets/generator_surgery.png)
+**TL;DR**: In this work, we show that cutting initial layers of a generative signal prior at test time improves image recovery performance.
 
-In this work, we show that cutting initial layers of a generative signal prior at test time improves image recovery performance.
+# Abstract
+
+Recent work has explored the use of generator networks with low latent dimension as signal priors for image recovery in compressed sensing. However, the recovery performance of such models is limited by high representation error. We introduce a method to reduce the representation error of such generator signal priors by cutting one or more initial blocks at test time and optimizing over the resulting higher-dimensional latent space. Experiments demonstrate significantly improved recovery for a variety of architectures. This approach also works well for out-of-training-distribution images and is competitive with other state-of-the-art methods.  Our experiments show that test-time architectural modifications can greatly improve the recovery quality of generator signal priors for compressed sensing
+
+![Generator Surgery](assets/generator_surgery.png)
 
 # Requirements
 
