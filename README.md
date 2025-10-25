@@ -1,5 +1,5 @@
 # Generator Surgery for Compressed Sensing
-by Jung Yeon Park\*, Niklas Smedemark-Margulies\*, Max Daniels, Rose Yu, Jan-Willem van de Meent, and Paul Hand
+by Jung Yeon Park\*, Niklas Smedemark-Margulies\*, Mara Daniels, Rose Yu, Jan-Willem van de Meent, and Paul Hand
 
 (\*) equal contribution
 
